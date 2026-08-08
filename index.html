@@ -3,151 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto & Mini App</title>
+    <title>Lucid Dream AI</title>
     <!-- Telegram Web App SDK -->
     <script src="https://telegram.org"></script>
     
     <style>
-        /* အခြေခံ အပြင်အဆင်နှင့် နောက်ခံအရောင် (ခေတ်မီ Dark Theme ပုံစံ) */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0f172a, #1e1b4b);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #090514, #140d2b);
             color: #ffffff;
             margin: 0;
-            padding: 20px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            min-height: 90vh;
         }
 
-        /* App Box Container */
-        .app-container {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 30px;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        .header {
             text-align: center;
-        }
-
-        /* ပရိုဖိုင်ပုံ သို့မဟုတ် အိုင်ကွန် ပြသမည့်နေရာ */
-        .avatar-box {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(45deg, #6366f1, #a855f7);
-            border-radius: 50%;
-            margin: 0 auto 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
-        }
-
-        h2 {
-            font-size: 24px;
-            margin-bottom: 5px;
-            color: #e2e8f0;
-        }
-
-        .subtitle {
-            font-size: 14px;
-            color: #94a3b8;
-            margin-bottom: 25px;
-        }
-
-        /* စာရိုက်သည့် Box ကို လှပအောင် ပြင်ဆင်ခြင်း */
-        .input-group {
-            width: 100%;
             margin-bottom: 20px;
         }
 
-        input {
-            width: 100%;
-            padding: 14px;
-            box-sizing: border-box;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            color: #fff;
-            font-size: 16px;
-            outline: none;
-            transition: 0.3s;
+        .header h1 {
+            font-size: 26px;
+            background: linear-gradient(45deg, #ff416c, #ff4b2b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
         }
 
-        input:focus {
-            border-color: #6366f1;
-            background: rgba(255, 255, 255, 0.15);
-            box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+        .header p {
+            font-size: 13px;
+            color: #8b85a3;
+            margin: 5px 0 0 0;
         }
 
-        /* ကလစ်နှိပ်မည့် ခလုတ် (Button) ဒီဇိုင်း */
-        .btn-send {
+        /* ဇာတ်ကောင် Card များ ပြသမည့်နေရာ */
+        .character-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
             width: 100%;
-            padding: 14px;
-            background: linear-gradient(90deg, #4f46e5, #7c3aed);
-            border: none;
-            border-radius: 12px;
-            color: white;
-            font-size: 16px;
-            font-weight: bold;
+            max-width: 450px;
+        }
+
+        .char-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            overflow: hidden;
+            text-align: center;
             cursor: pointer;
             transition: 0.3s;
-            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+            position: relative;
         }
 
-        .btn-send:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(124, 58, 237, 0.6);
+        .char-card:hover {
+            transform: translateY(-5px);
+            border-color: #ff416c;
+            box-shadow: 0 5px 15px rgba(255, 65, 108, 0.3);
         }
 
-        .btn-send:active {
-            transform: translateY(1px);
+        /* ဇာတ်ကောင် ပုံနေရာ (လောလောဆယ် Emoji သုံးထားသည်) */
+        .char-img {
+            height: 140px;
+            background: #251845;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+        }
+
+        .char-info {
+            padding: 12px;
+        }
+
+        .char-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #f1f0f5;
+        }
+
+        .char-tag {
+            font-size: 11px;
+            color: #ff416c;
+            background: rgba(255, 65, 108, 0.1);
+            padding: 2px 8px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+
+        /* ကန့်သတ်ချက် သတိပေးချက် */
+        .footer-text {
+            margin-top: 30px;
+            font-size: 11px;
+            color: #56506d;
+            text-align: center;
         }
     </style>
 </head>
 <body>
 
-    <div class="app-container">
-        <!-- အိုင်ကွန်ပုံ (မိမိကြိုက်ရာ ပြောင်းနိုင်သည်) -->
-        <div class="avatar-box">📱</div>
+    <div class="header">
+        <h1>LUCID DREAM AI</h1>
+        <p>စကားပြောလိုသည့် AI ဇာတ်ကောင်ကို ရွေးချယ်ပါ</p>
+    </div>
+
+    <!-- ဇာတ်ကောင်များ စာရင်း -->
+    <div class="character-container">
         
-        <h2>မင်္ဂလာပါ, <span id="username" style="color: #a855f7;">အသုံးပြုသူ</span>!</h2>
-        <div class="subtitle">စိတ်ကြိုက်ဒီဇိုင်းဆွဲထားသော Mini App ဖြစ်ပါသည်။</div>
-        
-        <div class="input-group">
-            <input type="text" id="user-data" placeholder="တစ်ခုခု ရိုက်ထည့်ပါ..." />
+        <!-- ဇာတ်ကောင် ၁ -->
+        <div class="char-card" onclick="selectCharacter('Sakura', 'Anime Student')">
+            <div class="char-img">🌸</div>
+            <div class="char-info">
+                <div class="char-name">Sakura</div>
+                <div class="char-tag">18+ Tsundere</div>
+            </div>
         </div>
-        
-        <button class="btn-send" id="send-btn">အချက်အလက်များ ပို့မည်</button>
+
+        <!-- ဇာတ်ကောင် ၂ -->
+        <div class="char-card" onclick="selectCharacter('Elena', 'Vampire Queen')">
+            <div class="char-img">🧛‍♀️</div>
+            <div class="char-info">
+                <div class="char-name">Elena</div>
+                <div class="char-tag">18+ Dominant</div>
+            </div>
+        </div>
+
+        <!-- ဇာတ်ကောင် ၃ -->
+        <div class="char-card" onclick="selectCharacter('Alpha', 'Cyber Bodyguard')">
+            <div class="char-img">🤖</div>
+            <div class="char-info">
+                <div class="char-name">Alpha</div>
+                <div class="char-tag">18+ Cool Guy</div>
+            </div>
+        </div>
+
+        <!-- ဇာတ်ကောင် ၄ -->
+        <div class="char-card" onclick="selectCharacter('Lisa', 'Office Secretary')">
+            <div class="char-img">💼</div>
+            <div class="char-info">
+                <div class="char-name">Lisa</div>
+                <div class="char-tag">18+ Romance</div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="footer-text">
+        This app contains 18+ adult content. Strictly for users over 18.
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // ဝင်လာသူ၏ Telegram နာမည်ကို ရယူပြသခြင်း
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            document.getElementById('username').innerText = tg.initDataUnsafe.user.first_name;
-        }
-
-        // ခလုတ်နှိပ်လျှင် Data ပို့ပြီး App ပိတ်ခြင်း
-        document.getElementById('send-btn').addEventListener('click', () => {
-            const inputVal = document.getElementById('user-data').value;
-
-            if (inputVal.trim() === "") {
-                tg.showAlert("ကျေးဇူးပြု၍ စာသားတစ်ခုခု အရင်ရိုက်ပါခင်ဗျာ။");
-                return;
-            }
-
-            tg.sendData(inputVal);
+        // ဇာတ်ကောင်တစ်ခုခုကို နှိပ်လိုက်လျှင် လုပ်ဆောင်မည့်အလုပ်
+        function selectCharacter(name, type) {
+            // Telegram Bot Chat ထဲသို့ ဇာတ်ကောင်နာမည်ကို လှမ်းပို့လိုက်ခြင်း
+            tg.sendData(JSON.stringify({
+                action: "start_chat",
+                character_name: name,
+                character_type: type
+            }));
+            
+            // App ကို ပိတ်လိုက်မည်
             tg.close();
-        });
+        }
     </script>
 </body>
 </html>
