@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto & Mini App</title>
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org"></script>
+    
+    <style>
+        /* အခြေခံ အပြင်အဆင်နှင့် နောက်ခံအရောင် (ခေတ်မီ Dark Theme ပုံစံ) */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e1b4b);
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 90vh;
+        }
+
+        /* App Box Container */
+        .app-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        /* ပရိုဖိုင်ပုံ သို့မဟုတ် အိုင်ကွန် ပြသမည့်နေရာ */
+        .avatar-box {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(45deg, #6366f1, #a855f7);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+        }
+
+        h2 {
+            font-size: 24px;
+            margin-bottom: 5px;
+            color: #e2e8f0;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #94a3b8;
+            margin-bottom: 25px;
+        }
+
+        /* စာရိုက်သည့် Box ကို လှပအောင် ပြင်ဆင်ခြင်း */
+        .input-group {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: #6366f1;
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+        }
+
+        /* ကလစ်နှိပ်မည့် ခလုတ် (Button) ဒီဇိုင်း */
+        .btn-send {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+        }
+
+        .btn-send:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(124, 58, 237, 0.6);
+        }
+
+        .btn-send:active {
+            transform: translateY(1px);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- အိုင်ကွန်ပုံ (မိမိကြိုက်ရာ ပြောင်းနိုင်သည်) -->
+        <div class="avatar-box">📱</div>
+        
+        <h2>မင်္ဂလာပါ, <span id="username" style="color: #a855f7;">အသုံးပြုသူ</span>!</h2>
+        <div class="subtitle">စိတ်ကြိုက်ဒီဇိုင်းဆွဲထားသော Mini App ဖြစ်ပါသည်။</div>
+        
+        <div class="input-group">
+            <input type="text" id="user-data" placeholder="တစ်ခုခု ရိုက်ထည့်ပါ..." />
+        </div>
+        
+        <button class="btn-send" id="send-btn">အချက်အလက်များ ပို့မည်</button>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // ဝင်လာသူ၏ Telegram နာမည်ကို ရယူပြသခြင်း
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            document.getElementById('username').innerText = tg.initDataUnsafe.user.first_name;
+        }
+
+        // ခလုတ်နှိပ်လျှင် Data ပို့ပြီး App ပိတ်ခြင်း
+        document.getElementById('send-btn').addEventListener('click', () => {
+            const inputVal = document.getElementById('user-data').value;
+
+            if (inputVal.trim() === "") {
+                tg.showAlert("ကျေးဇူးပြု၍ စာသားတစ်ခုခု အရင်ရိုက်ပါခင်ဗျာ။");
+                return;
+            }
+
+            tg.sendData(inputVal);
+            tg.close();
+        });
+    </script>
+</body>
+</html>
