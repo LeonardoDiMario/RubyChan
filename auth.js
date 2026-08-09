@@ -31,6 +31,7 @@
       #rubyAuthSwitch{width:100%;margin-top:8px}
       #rubyAuthClose{float:right;background:transparent;font-size:20px;padding:0}
       #rubyAuthMessage{min-height:20px;margin-top:10px;font-size:13px;color:#666}
+      .balance-area{gap:10px !important}
     `;
     document.head.appendChild(style);
 
