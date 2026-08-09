@@ -1,446 +1,804 @@
-```html
 <style>
-/* ================================
-   OVERLAY / AGE GATE / TERMS
-================================ */
-
-.overlay {
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(10, 10, 10, 0.98);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 99999;
-    padding: 20px;
-    text-align: center;
-    box-sizing: border-box;
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    -webkit-tap-highlight-color:transparent;
 }
 
-.overlay.hidden {
-    display: none !important;
-    pointer-events: none !important;
+html,body{
+    width:100%;
+    min-height:100%;
+    overflow-x:hidden;
 }
 
-.popup-box {
-    background: #1a1a1a;
-    padding: 35px 25px;
-    border-radius: 15px;
-    border: 2px solid #ff4757;
-    max-width: 420px;
-    width: 100%;
-    box-shadow: 0 0 25px rgba(255, 71, 87, 0.3);
-    box-sizing: border-box;
+body{
+    background:#eef8ff;
+    color:#24445d;
+    font-family:Arial,"Noto Sans Myanmar",sans-serif;
 }
 
-.popup-box h2 {
-    color: #ff4757;
-    margin: 0 0 15px;
-    font-size: 24px;
+/* =========================
+   OVERLAY
+========================= */
+
+.overlay{
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    background:rgba(13,38,61,.96);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:99999;
 }
 
-.popup-box p {
-    color: #ccc;
-    margin: 0 0 25px;
-    font-size: 15px;
-    line-height: 1.5;
+.overlay.hidden{
+    display:none!important;
+    pointer-events:none!important;
 }
 
-.terms-text {
-    background: #121212;
-    border: 1px solid #2f3542;
-    padding: 15px;
-    border-radius: 8px;
-    max-height: 180px;
-    overflow-y: auto;
-    text-align: left;
-    font-size: 13px;
-    color: #a4b0be;
-    margin-bottom: 25px;
-    line-height: 1.6;
+.popup-box{
+    width:100%;
+    max-width:430px;
+    background:#fff;
+    border-radius:24px;
+    padding:28px 22px;
+    text-align:center;
+    border:1px solid #d5edfb;
+    box-shadow:0 20px 60px rgba(28,132,193,.25);
 }
 
-.terms-text strong {
-    color: #ff6b81;
+.popup-box h2{
+    color:#1688d1;
+    margin-bottom:14px;
+    font-size:23px;
 }
 
-.btn-group {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
+.popup-box p{
+    color:#69859a;
+    font-size:14px;
+    line-height:1.7;
+    margin-bottom:22px;
 }
 
-.popup-btn {
-    padding: 12px 25px;
-    border: none;
-    border-radius: 8px;
-    font-size: 15px;
-    font-weight: bold;
-    cursor: pointer;
-
-    /* Telegram / mobile touch */
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-
-    transition: 0.2s;
-    width: 100%;
+.terms-text{
+    max-height:190px;
+    overflow-y:auto;
+    text-align:left;
+    background:#f3faff;
+    border:1px solid #d6edf9;
+    border-radius:13px;
+    padding:15px;
+    color:#607c90;
+    font-size:13px;
+    line-height:1.7;
+    margin-bottom:20px;
 }
 
-.btn-danger {
-    background: #ff4757;
-    color: white;
+.terms-text strong{
+    color:#1688d1;
 }
 
-.btn-danger:hover {
-    background: #ff6b81;
-    transform: scale(1.02);
+.btn-group{
+    display:flex;
+    gap:10px;
 }
 
-.btn-secondary {
-    background: #2f3542;
-    color: #a4b0be;
+.popup-btn{
+    flex:1;
+    border:none;
+    border-radius:12px;
+    padding:13px 10px;
+    font-weight:bold;
+    cursor:pointer;
+    touch-action:manipulation;
 }
 
-.btn-secondary:hover {
-    background: #57606f;
+.btn-primary{
+    background:linear-gradient(135deg,#68c9ff,#1688d1);
+    color:#fff;
 }
 
+.btn-secondary{
+    background:#e8f4fb;
+    color:#617c8e;
+}
 
-/* ================================
+/* =========================
    HEADER
-================================ */
+========================= */
 
-header {
-    background: #1e1e1e;
-    padding: 15px;
-    text-align: center;
-    border-bottom: 1px solid #2f3542;
+header{
+    position:sticky;
+    top:0;
+    z-index:500;
+    background:rgba(255,255,255,.96);
+    backdrop-filter:blur(14px);
+    border-bottom:1px solid #dceef8;
+    padding:12px 14px;
 }
 
-header h1 {
-    color: #ff4757;
-    font-size: 24px;
-    letter-spacing: 1px;
-    margin: 0;
+.header-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
 }
 
+.logo{
+    color:#1688d1;
+    font-family:"Trebuchet MS","Segoe Script",cursive;
+    font-size:27px;
+    font-weight:900;
+    letter-spacing:1px;
+    text-shadow:0 2px 8px rgba(22,136,209,.12);
+    white-space:nowrap;
+}
 
-/* ================================
+/* =========================
+   BALANCE
+========================= */
+
+.wallet-area{
+    display:flex;
+    align-items:center;
+    gap:6px;
+}
+
+.balance{
+    display:flex;
+    align-items:center;
+    gap:4px;
+    background:#eff9ff;
+    border:1px solid #cce9f8;
+    border-radius:20px;
+    padding:5px 5px 5px 8px;
+    font-size:12px;
+    font-weight:bold;
+    color:#476a80;
+    white-space:nowrap;
+}
+
+.balance-icon{
+    font-size:15px;
+}
+
+.plus-btn{
+    width:23px;
+    height:23px;
+    border:none;
+    border-radius:50%;
+    background:#1688d1;
+    color:#fff;
+    font-size:17px;
+    line-height:23px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    touch-action:manipulation;
+}
+
+.plus-btn:active{
+    transform:scale(.9);
+}
+
+/* =========================
    CONTENT
-================================ */
+========================= */
 
-.content-container {
-    flex: 1;
-    overflow-y: auto;
-    padding: 20px;
-    padding-bottom: 90px;
-    box-sizing: border-box;
+.content-container{
+    width:100%;
+    min-height:calc(100vh - 65px);
+    padding:18px 15px 90px;
 }
 
-.page {
-    display: none;
+.page{
+    display:none;
 }
 
-.page.active {
-    display: block;
-    animation: fadeIn 0.3s ease-in-out;
+.page.active{
+    display:block;
+    animation:fadeIn .25s ease;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
+@keyframes fadeIn{
+    from{
+        opacity:0;
+        transform:translateY(5px);
     }
-
-    to {
-        opacity: 1;
+    to{
+        opacity:1;
+        transform:translateY(0);
     }
 }
 
-
-/* ================================
+/* =========================
    HOME
-================================ */
+========================= */
 
-.welcome-box {
-    background: linear-gradient(135deg, #ff4757, #70a1ff);
-    padding: 20px;
-    border-radius: 12px;
-    margin-bottom: 20px;
+.welcome-box{
+    background:linear-gradient(135deg,#69caff,#79bff0);
+    color:#fff;
+    border-radius:23px;
+    padding:24px 20px;
+    margin-bottom:20px;
+    box-shadow:0 10px 28px rgba(48,158,218,.18);
 }
 
-.welcome-box h2 {
-    font-size: 20px;
-    margin: 0 0 5px;
+.welcome-box h2{
+    font-size:21px;
+    margin-bottom:7px;
 }
 
-.welcome-box p {
-    font-size: 13px;
-    opacity: 0.9;
-    margin: 0;
+.welcome-box p{
+    font-size:13px;
+    line-height:1.6;
+    opacity:.95;
 }
 
-.settings-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 15px;
+.section-title{
+    font-size:17px;
+    color:#2d5873;
+    margin-bottom:12px;
 }
 
-.settings-btn {
-    background: #1e1e1e;
-    border: 1px solid #2f3542;
-    color: white;
-    padding: 15px;
-    border-radius: 10px;
-    text-align: left;
-    font-size: 15px;
-    cursor: pointer;
-
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    width: 100%;
-
-    /* IMPORTANT FOR TELEGRAM */
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
+.settings-list{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
 }
 
-.settings-btn:hover {
-    background: #2f3542;
+.settings-btn{
+    width:100%;
+    border:1px solid #d6ebf7;
+    background:#fff;
+    color:#355a72;
+    border-radius:16px;
+    padding:15px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    cursor:pointer;
+    font-size:14px;
+    text-align:left;
+    box-shadow:0 5px 16px rgba(36,123,167,.06);
+    touch-action:manipulation;
 }
 
-
-/* ================================
-   CHARACTER CARDS
-================================ */
-
-.grid-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 15px;
-    margin-top: 15px;
+.settings-left{
+    display:flex;
+    align-items:center;
+    gap:11px;
 }
 
-.card {
-    background: #1e1e1e;
-    border-radius: 12px;
-    padding: 15px;
-    text-align: center;
-    border: 1px solid #2f3542;
-    transition: 0.3s;
+.settings-icon{
+    width:37px;
+    height:37px;
+    border-radius:11px;
+    background:#e8f6ff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:19px;
 }
 
-.card .avatar {
-    width: 60px;
-    height: 60px;
-    background: #2f3542;
-    border-radius: 50%;
-    margin: 0 auto 10px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    font-size: 24px;
+.arrow{
+    color:#78aac7;
+    font-size:20px;
 }
 
-.action-btn {
-    width: 100%;
-    padding: 10px;
-    background: #ff4757;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-    font-size: 13px;
+/* =========================
+   CHARACTER GRID
+========================= */
 
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
+.grid-container{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;
 }
 
-
-/* ================================
-   PREMIUM
-================================ */
-
-.pay-card {
-    background: #1e1e1e;
-    border: 1px solid #2f3542;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 15px;
-    border-left: 5px solid #ff4757;
-    text-align: left;
+.card{
+    background:#fff;
+    border:1px solid #d8edf8;
+    border-radius:19px;
+    padding:15px;
+    text-align:center;
+    box-shadow:0 7px 20px rgba(45,127,171,.07);
 }
 
-.pay-card h4 {
-    font-size: 18px;
-    color: #ff6b81;
-    margin: 0 0 5px;
+.avatar{
+    width:64px;
+    height:64px;
+    margin:0 auto 10px;
+    border-radius:50%;
+    background:linear-gradient(135deg,#e4f6ff,#d3edfb);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:28px;
 }
 
-.pay-card .price {
-    font-size: 22px;
-    font-weight: bold;
-    margin-bottom: 15px;
-    color: #fff;
+.card h3{
+    color:#315873;
+    font-size:16px;
+    margin-bottom:4px;
 }
 
-.pay-methods {
-    display: flex;
-    gap: 10px;
+.card p{
+    color:#7892a4;
+    font-size:12px;
+    margin-bottom:12px;
 }
 
-.method-btn {
-    flex: 1;
-    padding: 10px;
-    border: none;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-    text-align: center;
-    font-size: 12px;
-
-    touch-action: manipulation;
+.action-btn{
+    width:100%;
+    border:none;
+    border-radius:10px;
+    padding:10px;
+    background:linear-gradient(135deg,#62c4ff,#1688d1);
+    color:#fff;
+    font-weight:bold;
+    cursor:pointer;
+    touch-action:manipulation;
 }
 
-.btn-kpay {
-    background: #0066cc;
-    color: white;
+/* =========================
+   RECHARGE
+========================= */
+
+.recharge-card{
+    background:#fff;
+    border:1px solid #d7ebf7;
+    border-radius:19px;
+    padding:18px;
+    margin-bottom:13px;
+    box-shadow:0 6px 18px rgba(45,127,171,.06);
 }
 
-.btn-wave {
-    background: #fbc531;
-    color: #000;
+.recharge-card h4{
+    color:#1688d1;
+    font-size:17px;
+    margin-bottom:6px;
 }
 
-.badge {
-    background: #2f3542;
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: bold;
-    color: #ff4757;
+.recharge-card p{
+    color:#7891a4;
+    font-size:13px;
+    margin-bottom:14px;
 }
 
+.price{
+    font-size:20px;
+    font-weight:bold;
+    color:#294f69;
+    margin-bottom:12px;
+}
 
-/* ================================
+.recharge-btn{
+    width:100%;
+    padding:11px;
+    border:none;
+    border-radius:11px;
+    background:#e8f6ff;
+    color:#1688d1;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+/* =========================
+   PAYMENT
+========================= */
+
+.payment-box{
+    background:#fff;
+    border:1px solid #d8edf8;
+    border-radius:20px;
+    padding:18px;
+    box-shadow:0 7px 20px rgba(45,127,171,.06);
+}
+
+.payment-title{
+    color:#2d5873;
+    font-size:17px;
+    margin-bottom:5px;
+}
+
+.payment-subtitle{
+    color:#7c96a7;
+    font-size:13px;
+    margin-bottom:18px;
+}
+
+.payment-method{
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    border:1px solid #d7ebf7;
+    background:#f9fdff;
+    border-radius:15px;
+    padding:14px;
+    margin-bottom:10px;
+    cursor:pointer;
+    text-align:left;
+    touch-action:manipulation;
+}
+
+.payment-method:active{
+    transform:scale(.985);
+}
+
+.payment-left{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.payment-icon{
+    width:42px;
+    height:42px;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:22px;
+}
+
+.kpay{
+    background:#e3f2ff;
+}
+
+.wave{
+    background:#fff5c9;
+}
+
+.starpay{
+    background:#eee8ff;
+}
+
+.payment-name{
+    font-weight:bold;
+    color:#315873;
+}
+
+.payment-desc{
+    color:#8aa0ae;
+    font-size:11px;
+    margin-top:3px;
+}
+
+.payment-arrow{
+    color:#77a9c4;
+    font-size:19px;
+}
+
+/* =========================
+   SETTINGS
+========================= */
+
+.setting-group{
+    margin-bottom:20px;
+}
+
+.setting-group-title{
+    color:#7d98aa;
+    font-size:12px;
+    font-weight:bold;
+    text-transform:uppercase;
+    margin:0 0 8px 6px;
+    letter-spacing:.5px;
+}
+
+.setting-card{
+    background:#fff;
+    border:1px solid #d8edf8;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 5px 17px rgba(45,127,171,.05);
+}
+
+.plan-row{
+    padding:17px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+}
+
+.plan-left{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.plan-icon{
+    width:42px;
+    height:42px;
+    border-radius:13px;
+    background:#e6f5ff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:21px;
+}
+
+.plan-name{
+    color:#315873;
+    font-weight:bold;
+}
+
+.plan-status{
+    color:#8aa0ae;
+    font-size:12px;
+    margin-top:3px;
+}
+
+.free-badge{
+    background:#e8f5fc;
+    color:#1688d1;
+    border-radius:20px;
+    padding:7px 12px;
+    font-size:12px;
+    font-weight:bold;
+}
+
+.upgrade-small{
+    border:none;
+    background:#1688d1;
+    color:#fff;
+    border-radius:9px;
+    padding:8px 11px;
+    font-size:11px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.setting-row{
+    width:100%;
+    border:none;
+    border-bottom:1px solid #edf5f9;
+    background:#fff;
+    padding:15px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    cursor:pointer;
+    text-align:left;
+    touch-action:manipulation;
+}
+
+.setting-row:last-child{
+    border-bottom:none;
+}
+
+.setting-row-left{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.setting-row-icon{
+    width:36px;
+    height:36px;
+    border-radius:10px;
+    background:#eff9ff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:17px;
+}
+
+.setting-row-title{
+    color:#365a70;
+    font-size:14px;
+    font-weight:bold;
+}
+
+.setting-row-sub{
+    color:#91a5b1;
+    font-size:11px;
+    margin-top:3px;
+}
+
+.setting-arrow{
+    color:#8bb1c7;
+    font-size:18px;
+}
+
+.toggle{
+    width:42px;
+    height:23px;
+    border-radius:20px;
+    background:#cfe1eb;
+    position:relative;
+}
+
+.toggle.active{
+    background:#49b7ee;
+}
+
+.toggle::after{
+    content:"";
+    position:absolute;
+    top:3px;
+    left:3px;
+    width:17px;
+    height:17px;
+    border-radius:50%;
+    background:#fff;
+    transition:.2s;
+}
+
+.toggle.active::after{
+    left:22px;
+}
+
+/* =========================
+   LANGUAGE
+========================= */
+
+.language-options{
+    padding:15px;
+    display:flex;
+    gap:10px;
+}
+
+.language-option{
+    flex:1;
+    padding:12px;
+    border:1px solid #cfe8f7;
+    background:#f5fbff;
+    border-radius:11px;
+    color:#4c7189;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.language-option.active{
+    background:#1688d1;
+    color:#fff;
+    border-color:#1688d1;
+}
+
+/* =========================
+   CHAT
+========================= */
+
+.chat-empty{
+    min-height:55vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+}
+
+.chat-icon{
+    width:82px;
+    height:82px;
+    border-radius:50%;
+    background:#dff3ff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:38px;
+    margin-bottom:15px;
+}
+
+.chat-empty h3{
+    color:#315873;
+    margin-bottom:7px;
+}
+
+.chat-empty p{
+    color:#7b95a8;
+    font-size:13px;
+}
+
+/* =========================
    BOTTOM NAV
-================================ */
+========================= */
 
-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-
-    background: #1e1e1e;
-    border-top: 1px solid #2f3542;
-
-    display: flex;
-    justify-content: space-around;
-
-    padding: 10px 0;
-
-    z-index: 1000;
+nav{
+    position:fixed;
+    left:0;
+    bottom:0;
+    width:100%;
+    height:68px;
+    background:rgba(255,255,255,.97);
+    backdrop-filter:blur(12px);
+    border-top:1px solid #d9edf8;
+    display:flex;
+    justify-content:space-around;
+    align-items:center;
+    z-index:900;
 }
 
-.nav-item {
-    background: none;
-    border: none;
-    color: #a4b0be;
-
-    font-size: 12px;
-    cursor: pointer;
-
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-
-    padding: 5px 20px;
-
-    /* Telegram touch */
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
+.nav-item{
+    flex:1;
+    height:100%;
+    background:transparent;
+    border:none;
+    color:#91a8b8;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    gap:3px;
+    cursor:pointer;
+    font-size:11px;
+    touch-action:manipulation;
 }
 
-.nav-item.active {
-    color: #ff4757;
+.nav-icon{
+    font-size:21px;
 }
 
-.nav-icon {
-    font-size: 20px;
+.nav-item.active{
+    color:#1688d1;
 }
 
-
-/* ================================
+/* =========================
    MOBILE
-================================ */
+========================= */
 
-@media (max-width: 480px) {
+@media(max-width:390px){
 
-    .popup-box {
-        padding: 25px 18px;
+    .logo{
+        font-size:23px;
     }
 
-    .popup-box h2 {
-        font-size: 21px;
+    .wallet-area{
+        gap:3px;
     }
 
-    .btn-group {
-        gap: 10px;
+    .balance{
+        padding:4px 4px 4px 6px;
+        font-size:10px;
     }
 
-    .popup-btn {
-        padding: 11px 10px;
-        font-size: 14px;
+    .plus-btn{
+        width:21px;
+        height:21px;
+        font-size:14px;
     }
 
-    .content-container {
-        padding: 15px;
-        padding-bottom: 90px;
+    .grid-container{
+        gap:9px;
     }
 }
 </style>
 
 
-<!-- =================================
-     STAGE 1 — AGE GATE
-================================= -->
+<!-- AGE GATE -->
 
 <div id="age-gate" class="overlay">
 
     <div class="popup-box">
 
-        <h2>
-            အသက် ၁၈ နှစ် ပြည့်ပြီးပြီလား?
-        </h2>
+        <h2>အသက် ၁၈ နှစ် ပြည့်ပြီးပြီလား?</h2>
 
         <p>
-            ဤ Mini App တွင် လူကြီးကြိုက် (18+ Adult Content)
-            အကြောင်းအရာများ ပါဝင်သောကြောင့် အသက် ၁၈ နှစ်ပြည့်ပြီးသူများသာ
-            ဝင်ရောက်ခွင့်ရှိပါသည်။
+            Ruby Chan ကို အသက် ၁၈ နှစ်နှင့်အထက်
+            အသုံးပြုသူများအတွက်သာ ပြုလုပ်ထားပါသည်။
         </p>
 
         <div class="btn-group">
 
             <button
-                class="popup-btn btn-danger"
                 type="button"
+                class="popup-btn btn-primary"
                 onclick="verifyAge(true)"
             >
                 ဟုတ်ကဲ့၊ ပြည့်ပါပြီ
             </button>
 
             <button
-                class="popup-btn btn-secondary"
                 type="button"
+                class="popup-btn btn-secondary"
                 onclick="verifyAge(false)"
             >
                 မပြည့်သေးပါ
@@ -453,68 +811,55 @@ nav {
 </div>
 
 
-<!-- =================================
-     STAGE 2 — TERMS
-================================= -->
+<!-- TERMS -->
 
-<div
-    id="terms-gate"
-    class="overlay hidden"
->
+<div id="terms-gate" class="overlay hidden">
 
     <div class="popup-box">
 
-        <h2>
-            Terms of Use
-        </h2>
+        <h2>Terms of Use</h2>
 
         <p>
-            ကျေးဇူးပြု၍ အောက်ပါအသုံးပြုမှု
-            စည်းကမ်းချက်များကို ဖတ်ရှုပြီး
-            သဘောတူညီပေးပါရန်။
+            ဆက်လက်အသုံးပြုရန် အောက်ပါစည်းကမ်းချက်များကို
+            ဖတ်ရှုပြီး သဘောတူပေးပါ။
         </p>
 
         <div class="terms-text">
 
             <strong>၁။ အသက်ကန့်သတ်ချက်</strong><br>
-
-            ဤ App ကို အသက် ၁၈ နှစ်ပြည့်ပြီးသူများသာ
-            အသုံးပြုခွင့်ရှိသည်။
-
-            <br><br>
-
-            <strong>၂။ အကြောင်းအရာများ</strong><br>
-
-            ဤနေရာတွင် တွေ့ရှိရသော စာသားများနှင့်
-            ဇာတ်ကောင်များသည် AI နည်းပညာဖြင့်
-            ဖန်တီးထားသော စိတ်ကူးယဉ် သရုပ်ဆောင်မှုများသာ ဖြစ်သည်။
+            ဤ App ကို အသက် ၁၈ နှစ်နှင့်အထက်
+            အသုံးပြုသူများသာ အသုံးပြုခွင့်ရှိသည်။
 
             <br><br>
 
-            <strong>၃။ လုံခြုံရေးနှင့် လျှို့ဝှက်ချက်</strong><br>
+            <strong>၂။ AI Content</strong><br>
+            ဇာတ်ကောင်များနှင့် စကားပြောဆိုမှုများသည်
+            AI ဖြင့် ဖန်တီးထားသော fictional content များဖြစ်သည်။
 
-            သင်နှင့် AI တို့ ပြောဆိုသော စကားလုံးများကို
-            မည်သည့်နေရာတွင်မှ မျှဝေခြင်း သို့မဟုတ်
-            သိမ်းဆည်းခြင်း ပြုလုပ်မည်မဟုတ်ပါ။
+            <br><br>
+
+            <strong>၃။ Privacy</strong><br>
+            သုံးစွဲသူ၏ ကိုယ်ရေးကိုယ်တာအချက်အလက်များကို
+            မလိုအပ်ဘဲ မျှဝေခြင်းမပြုရန် ရည်ရွယ်ထားသည်။
 
         </div>
 
         <div class="btn-group">
 
             <button
-                class="popup-btn btn-danger"
                 type="button"
+                class="popup-btn btn-primary"
                 onclick="acceptTerms(true)"
             >
-                သဘောတူပါသည် (Accept)
+                Accept
             </button>
 
             <button
-                class="popup-btn btn-secondary"
                 type="button"
+                class="popup-btn btn-secondary"
                 onclick="acceptTerms(false)"
             >
-                ငြင်းပယ်မည်
+                Decline
             </button>
 
         </div>
@@ -524,114 +869,202 @@ nav {
 </div>
 
 
-<!-- =================================
-     HEADER
-================================= -->
+<!-- HEADER -->
 
 <header>
 
-    <h1>Ruby Chan</h1>
+    <div class="header-top">
+
+        <div class="logo">
+            Ruby Chan
+        </div>
+
+        <div class="wallet-area">
+
+            <div class="balance">
+
+                <span class="balance-icon">⚡</span>
+
+                <span id="energy-value">
+                    100
+                </span>
+
+                <button
+                    type="button"
+                    class="plus-btn"
+                    onclick="recharge('energy')"
+                >
+                    +
+                </button>
+
+            </div>
+
+            <div class="balance">
+
+                <span class="balance-icon">💎</span>
+
+                <span id="gem-value">
+                    250
+                </span>
+
+                <button
+                    type="button"
+                    class="plus-btn"
+                    onclick="recharge('gems')"
+                >
+                    +
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
 
 </header>
 
 
-<!-- =================================
-     CONTENT
-================================= -->
+<!-- CONTENT -->
 
 <div class="content-container">
 
 
     <!-- HOME -->
 
-    <div
-        id="page-home"
-        class="page active"
-    >
+    <section id="page-home" class="page active">
 
         <div class="welcome-box">
 
-            <h2>
+            <h2 id="welcome-title">
                 Welcome to Ruby Chan!
             </h2>
 
-            <p>
-                စိတ်လှုပ်ရှားစရာကောင်းမွန်တဲ့
-                18+ AI Chat Roleplay ကမ္ဘာမှ ကြိုဆိုပါတယ်။
+            <p id="welcome-desc">
+                Your AI character chat world.
             </p>
 
         </div>
 
-
-        <h3>
-            အထူးပြုလုပ်ချက်များ
+        <h3
+            class="section-title"
+            id="features-title"
+        >
+            Features
         </h3>
-
 
         <div class="settings-list">
 
             <button
                 type="button"
                 class="settings-btn"
-                onclick="switchPage('upgrade')"
-            >
-                <span>⭐ Premium Upgrade တင်ရန်</span>
-                <span class="badge">🔥 VIP</span>
-            </button>
-
-
-            <button
-                type="button"
-                class="settings-btn"
                 onclick="switchPage('characters')"
             >
-                <span>🔥 စကားပြောရန် ဇာတ်ကောင်များ ရှာဖွေရန်</span>
-                <span>👉</span>
+
+                <span class="settings-left">
+
+                    <span class="settings-icon">👥</span>
+
+                    <span id="find-character">
+                        Find Characters
+                    </span>
+
+                </span>
+
+                <span class="arrow">›</span>
+
             </button>
 
 
             <button
                 type="button"
                 class="settings-btn"
-                onclick="showTermsModal()"
+                onclick="switchPage('recharge')"
             >
-                <span>📄 Terms of Use ပြန်ဖတ်ရန်</span>
-                <span>👉</span>
+
+                <span class="settings-left">
+
+                    <span class="settings-icon">💎</span>
+
+                    <span id="recharge-text">
+                        Recharge
+                    </span>
+
+                </span>
+
+                <span class="arrow">›</span>
+
+            </button>
+
+
+            <button
+                type="button"
+                class="settings-btn"
+                onclick="switchPage('settings')"
+            >
+
+                <span class="settings-left">
+
+                    <span class="settings-icon">⚙️</span>
+
+                    <span id="settings-text">
+                        Settings
+                    </span>
+
+                </span>
+
+                <span class="arrow">›</span>
+
             </button>
 
         </div>
 
-    </div>
+    </section>
+
+
+    <!-- CHAT -->
+
+    <section id="page-chat" class="page">
+
+        <div class="chat-empty">
+
+            <div class="chat-icon">
+                💬
+            </div>
+
+            <h3 id="chat-title">
+                Chatting
+            </h3>
+
+            <p id="chat-desc">
+                Your conversations will appear here.
+            </p>
+
+        </div>
+
+    </section>
 
 
     <!-- CHARACTERS -->
 
-    <div
-        id="page-characters"
-        class="page"
-    >
+    <section id="page-characters" class="page">
 
-        <h3>
-            ဇာတ်ကောင်များ ရွေးချယ်ပါ
+        <h3
+            class="section-title"
+            id="character-title"
+        >
+            Characters
         </h3>
-
 
         <div class="grid-container">
 
 
             <div class="card">
 
-                <div class="avatar">
-                    🌸
-                </div>
+                <div class="avatar">🌸</div>
 
-                <h3>
-                    Sakura
-                </h3>
+                <h3>Sakura</h3>
 
-                <p>
-                    18+ Tsundere
-                </p>
+                <p>Sweet Tsundere</p>
 
                 <button
                     type="button"
@@ -646,22 +1079,16 @@ nav {
 
             <div class="card">
 
-                <div class="avatar">
-                    🧛‍♀️
-                </div>
+                <div class="avatar">🦋</div>
 
-                <h3>
-                    Elena
-                </h3>
+                <h3>Miyuki</h3>
 
-                <p>
-                    18+ Dominant
-                </p>
+                <p>Elegant & Calm</p>
 
                 <button
                     type="button"
                     class="action-btn"
-                    onclick="openCharacter('Elena')"
+                    onclick="openCharacter('Miyuki')"
                 >
                     Chat
                 </button>
@@ -669,103 +1096,846 @@ nav {
             </div>
 
 
+            <div class="card">
+
+                <div class="avatar">🌙</div>
+
+                <h3>Yuna</h3>
+
+                <p>Mysterious</p>
+
+                <button
+                    type="button"
+                    class="action-btn"
+                    onclick="openCharacter('Yuna')"
+                >
+                    Chat
+                </button>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="avatar">💜</div>
+
+                <h3>Reina</h3>
+
+                <p>Confident</p>
+
+                <button
+                    type="button"
+                    class="action-btn"
+                    onclick="openCharacter('Reina')"
+                >
+                    Chat
+                </button>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="avatar">🌹</div>
+
+                <h3>Airi</h3>
+
+                <p>Romantic</p>
+
+                <button
+                    type="button"
+                    class="action-btn"
+                    onclick="openCharacter('Airi')"
+                >
+                    Chat
+                </button>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="avatar">🖤</div>
+
+                <h3>Akane</h3>
+
+                <p>Cool & Playful</p>
+
+                <button
+                    type="button"
+                    class="action-btn"
+                    onclick="openCharacter('Akane')"
+                >
+                    Chat
+                </button>
+
+            </div>
+
         </div>
 
-    </div>
+    </section>
 
 
-    <!-- UPGRADE -->
+    <!-- RECHARGE -->
 
-    <div
-        id="page-upgrade"
-        class="page"
-    >
+    <section id="page-recharge" class="page">
 
-        <h3>
-            Premium အစီအစဉ်များ
+        <h3
+            class="section-title"
+            id="recharge-title"
+        >
+            Recharge
         </h3>
 
-        <p
-            style="
-                font-size:13px;
-                color:#aaa;
-                margin-bottom:15px;
-            "
-        >
-            VIP အဖွဲ့ဝင်ဝင်ပြီး
-            စကားပြောကန့်သတ်ချက်မဲ့ ရယူပါ။
-        </p>
 
+        <div class="recharge-card">
 
-        <!-- FREE -->
+            <h4>⚡ Energy</h4>
 
-        <div
-            class="pay-card"
-            style="border-left-color:#57606f;"
-        >
-
-            <h4>
-                Free Plan
-            </h4>
+            <p>
+                Recharge your energy for chatting.
+            </p>
 
             <div class="price">
-                0 MMK / Forever
+                100 Energy
             </div>
 
             <button
                 type="button"
-                class="action-btn"
-                style="background:#57606f;"
-                onclick="showMessage('You are already using Free Plan')"
+                class="recharge-btn"
+                onclick="showPayment('energy')"
             >
-                Current Plan
+                Buy Energy
             </button>
 
         </div>
 
 
-        <!-- PREMIUM -->
+        <div class="recharge-card">
 
-        <div class="pay-card">
+            <h4>💎 Gems</h4>
 
-            <h4>
-                Premium 1 Month
-            </h4>
+            <p>
+                Get gems for premium features.
+            </p>
 
             <div class="price">
-                5,000 MMK
+                500 Gems
             </div>
 
-            <div class="pay-methods">
+            <button
+                type="button"
+                class="recharge-btn"
+                onclick="showPayment('gems')"
+            >
+                Buy Gems
+            </button>
+
+        </div>
+
+
+        <div
+            id="payment-section"
+            class="payment-box"
+            style="display:none;"
+        >
+
+            <h3 class="payment-title">
+                Choose Payment Method
+            </h3>
+
+            <p class="payment-subtitle">
+                Select your preferred payment method.
+            </p>
+
+
+            <button
+                type="button"
+                class="payment-method"
+                onclick="selectPayment('KPay')"
+            >
+
+                <span class="payment-left">
+
+                    <span class="payment-icon kpay">
+                        💙
+                    </span>
+
+                    <span>
+                        <span class="payment-name">
+                            KPay
+                        </span>
+
+                        <br>
+
+                        <span class="payment-desc">
+                            KPay Payment
+                        </span>
+                    </span>
+
+                </span>
+
+                <span class="payment-arrow">›</span>
+
+            </button>
+
+
+            <button
+                type="button"
+                class="payment-method"
+                onclick="selectPayment('WavePay')"
+            >
+
+                <span class="payment-left">
+
+                    <span class="payment-icon wave">
+                        🌊
+                    </span>
+
+                    <span>
+                        <span class="payment-name">
+                            WavePay
+                        </span>
+
+                        <br>
+
+                        <span class="payment-desc">
+                            Wave Money Payment
+                        </span>
+                    </span>
+
+                </span>
+
+                <span class="payment-arrow">›</span>
+
+            </button>
+
+
+            <button
+                type="button"
+                class="payment-method"
+                onclick="selectPayment('StarPay')"
+            >
+
+                <span class="payment-left">
+
+                    <span class="payment-icon starpay">
+                        ⭐
+                    </span>
+
+                    <span>
+                        <span class="payment-name">
+                            StarPay
+                        </span>
+
+                        <br>
+
+                        <span class="payment-desc">
+                            StarPay Payment
+                        </span>
+                    </span>
+
+                </span>
+
+                <span class="payment-arrow">›</span>
+
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- SETTINGS -->
+
+    <section id="page-settings" class="page">
+
+        <h3
+            class="section-title"
+            id="settings-title"
+        >
+            Settings
+        </h3>
+
+
+        <!-- ACCOUNT / PLAN -->
+
+        <div class="setting-group">
+
+            <div class="setting-group-title">
+                Account
+            </div>
+
+            <div class="setting-card">
+
+                <div class="plan-row">
+
+                    <div class="plan-left">
+
+                        <div class="plan-icon">
+                            👑
+                        </div>
+
+                        <div>
+
+                            <div class="plan-name">
+                                Your Plan
+                            </div>
+
+                            <div class="plan-status">
+                                Current membership
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div
+                        id="plan-badge"
+                        class="free-badge"
+                    >
+                        Free
+                    </div>
+
+                </div>
+
+
+                <div
+                    class="plan-row"
+                    style="
+                        padding-top:0;
+                        border-top:1px solid #edf5f9;
+                    "
+                >
+
+                    <div class="plan-left">
+
+                        <div class="plan-icon">
+                            ⭐
+                        </div>
+
+                        <div>
+
+                            <div class="plan-name">
+                                Premium
+                            </div>
+
+                            <div class="plan-status">
+                                Unlock more features
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="upgrade-small"
+                        onclick="upgradePlan()"
+                    >
+                        Upgrade
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- LANGUAGE -->
+
+        <div class="setting-group">
+
+            <div class="setting-group-title">
+                Preferences
+            </div>
+
+            <div class="setting-card">
+
+                <div class="setting-row">
+
+                    <div class="setting-row-left">
+
+                        <div class="setting-row-icon">
+                            🌐
+                        </div>
+
+                        <div>
+
+                            <div class="setting-row-title">
+                                Language
+                            </div>
+
+                            <div
+                                class="setting-row-sub"
+                                id="current-language"
+                            >
+                                English
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="language-options">
+
+                    <button
+                        type="button"
+                        id="lang-en"
+                        class="language-option active"
+                        onclick="changeLanguage('en')"
+                    >
+                        🇬🇧 English
+                    </button>
+
+
+                    <button
+                        type="button"
+                        id="lang-mm"
+                        class="language-option"
+                        onclick="changeLanguage('mm')"
+                    >
+                        🇲🇲 မြန်မာ
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- NOTIFICATIONS -->
+
+        <div class="setting-group">
+
+            <div class="setting-group-title">
+                Notifications
+            </div>
+
+            <div class="setting-card">
 
                 <button
                     type="button"
-                    class="method-btn btn-kpay"
-                    onclick="payment('KPay', 5000)"
+                    class="setting-row"
+                    onclick="toggleSetting(this)"
                 >
-                    KPay
+
+                    <span class="setting-row-left">
+
+                        <span class="setting-row-icon">
+                            💬
+                        </span>
+
+                        <span>
+
+                            <span class="setting-row-title">
+                                Chat Notifications
+                            </span>
+
+                            <br>
+
+                            <span class="setting-row-sub">
+                                Receive new chat alerts
+                            </span>
+
+                        </span>
+
+                    </span>
+
+                    <span class="toggle active"></span>
+
                 </button>
 
+
                 <button
                     type="button"
-                    class="method-btn btn-wave"
-                    onclick="payment('WavePay', 5000)"
+                    class="setting-row"
+                    onclick="toggleSetting(this)"
                 >
-                    WavePay
+
+                    <span class="setting-row-left">
+
+                        <span class="setting-row-icon">
+                            🔔
+                        </span>
+
+                        <span>
+
+                            <span class="setting-row-title">
+                                Offers & Updates
+                            </span>
+
+                            <br>
+
+                            <span class="setting-row-sub">
+                                Premium offers and updates
+                            </span>
+
+                        </span>
+
+                    </span>
+
+                    <span class="toggle active"></span>
+
                 </button>
 
             </div>
 
         </div>
 
-    </div>
+
+        <!-- BALANCE -->
+
+        <div class="setting-group">
+
+            <div class="setting-group-title">
+                Wallet
+            </div>
+
+            <div class="setting-card">
+
+                <button
+                    type="button"
+                    class="setting-row"
+                    onclick="switchPage('recharge')"
+                >
+
+                    <span class="setting-row-left">
+
+                        <span class="setting-row-icon">
+                            ⚡
+                        </span>
+
+                        <span>
+
+                            <span class="setting-row-title">
+                                Energy
+                            </span>
+
+                            <br>
+
+                            <span
+                                class="setting-row-sub"
+                                id="settings-energy"
+                            >
+                                100 Energy
+                            </span>
+
+                        </span>
+
+                    </span>
+
+                    <span class="setting-arrow">
+                        ›
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="setting-row"
+                    onclick="switchPage('recharge')"
+                >
+
+                    <span class="setting-row-left">
+
+                        <span class="setting-row-icon">
+                            💎
+                        </span>
+
+                        <span>
+
+                            <span class="setting-row-title">
+                                Gems
+                            </span>
+
+                            <br>
+
+                            <span
+                                class="setting-row-sub"
+                                id="settings-gems"
+                            >
+                                250 Gems
+                            </span>
+
+                        </span>
+
+                    </span>
+
+                    <span class="setting-arrow">
+                        ›
+                    </span>
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- PRIVACY -->
+
+        <div class="setting-group">
+
+            <div class="setting-group-title">
+                Privacy & Safety
+            </div>
+
+            <div class="setting-card">
+
+                <button
+                    type="button"
+                    class="setting-row"
+                    onclick="showInfo('Privacy Settings')"
+                >
+
+                    <span class="setting-row-left">
+
+                        <span class="setting-row-icon">
+                            🛡️
+                        </span>
+
+                        <span>
+
+                            <span class="setting-row-title">
+                                Privacy Settings
+                            </span>
+
+                            <br>
+
+                            <span class="setting-row-sub">
+                                Manage your privacy
+                            </span>
+
+                        </span>
+
+                    </span>
+
+                    <span class="setting-arrow">
+                        ›
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="setting-row"
+                    onclick="showInfo('18+ Content Policy')"
+                >
+
+                    <span class="setting-row-left">
+
+                        <span class="setting-row-icon">
+                            🔞
+                        </span>
+
+                        <span>
+
+                            <span class="setting-row-title">
+                                18+ Content Policy
+                            </span>
+
+                            <br>
+
+                            <span class="setting-row-sub">
+                                Content and safety rules
+                            </span>
+
+                        </span>
+
+                    </span>
+
+                    <span class="setting-arrow">
+                        ›
+                    </span>
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- LEGAL -->
+
+        <div class="setting-group">
+
+            <div class="setting-group-title">
+                Legal
+            </div>
+
+            <div class="setting-card">
+
+                <button
+                    type="button"
+                    class="setting-row"
+                    onclick="showTerms()"
+                >
+
+                    <span class="setting-row-left">
+
+                        <span class="setting-row-icon">
+                            📄
+                        </span>
+
+                        <span>
+
+                            <span class="setting-row-title">
+                                Terms of Use
+                            </span>
+
+                            <br>
+
+                            <span class="setting-row-sub">
+                                Read our terms
+                            </span>
+
+                        </span>
+
+                    </span>
+
+                    <span class="setting-arrow">
+                        ›
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="setting-row"
+                    onclick="showInfo('Privacy Policy')"
+                >
+
+                    <span class="setting-row-left">
+
+                        <span class="setting-row-icon">
+                            🔐
+                        </span>
+
+                        <span>
+
+                            <span class="setting-row-title">
+                                Privacy Policy
+                            </span>
+
+                            <br>
+
+                            <span class="setting-row-sub">
+                                How your data is handled
+                            </span>
+
+                        </span>
+
+                    </span>
+
+                    <span class="setting-arrow">
+                        ›
+                    </span>
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- HELP -->
+
+        <div class="setting-group">
+
+            <div class="setting-group-title">
+                Support
+            </div>
+
+            <div class="setting-card">
+
+                <button
+                    type="button"
+                    class="setting-row"
+                    onclick="showInfo('FAQ & Support')"
+                >
+
+                    <span class="setting-row-left">
+
+                        <span class="setting-row-icon">
+                            ❓
+                        </span>
+
+                        <span>
+
+                            <span class="setting-row-title">
+                                Help & Support
+                            </span>
+
+                            <br>
+
+                            <span class="setting-row-sub">
+                                FAQ and customer support
+                            </span>
+
+                        </span>
+
+                    </span>
+
+                    <span class="setting-arrow">
+                        ›
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="setting-row"
+                    onclick="showInfo('Ruby Chan')"
+                >
+
+                    <span class="setting-row-left">
+
+                        <span class="setting-row-icon">
+                            ✨
+                        </span>
+
+                        <span>
+
+                            <span class="setting-row-title">
+                                About Ruby Chan
+                            </span>
+
+                            <br>
+
+                            <span class="setting-row-sub">
+                                Version 1.0.0
+                            </span>
+
+                        </span>
+
+                    </span>
+
+                    <span class="setting-arrow">
+                        ›
+                    </span>
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
 
 </div>
 
 
-<!-- =================================
-     BOTTOM NAV
-================================= -->
+<!-- BOTTOM NAV -->
 
 <nav>
 
@@ -775,10 +1945,19 @@ nav {
         data-page="home"
         onclick="switchPage('home')"
     >
-
         <span class="nav-icon">🏠</span>
-        <span>Home</span>
+        <span id="nav-home">Home</span>
+    </button>
 
+
+    <button
+        type="button"
+        class="nav-item"
+        data-page="chat"
+        onclick="switchPage('chat')"
+    >
+        <span class="nav-icon">💬</span>
+        <span id="nav-chat">Chatting</span>
     </button>
 
 
@@ -788,186 +1967,99 @@ nav {
         data-page="characters"
         onclick="switchPage('characters')"
     >
-
         <span class="nav-icon">👥</span>
-        <span>Characters</span>
-
+        <span id="nav-character">Characters</span>
     </button>
 
 
     <button
         type="button"
         class="nav-item"
-        data-page="upgrade"
-        onclick="switchPage('upgrade')"
+        data-page="settings"
+        onclick="switchPage('settings')"
     >
-
-        <span class="nav-icon">⭐</span>
-        <span>Premium</span>
-
+        <span class="nav-icon">⚙️</span>
+        <span id="nav-settings">Settings</span>
     </button>
 
 </nav>
 
 
-<!-- =================================
-     JAVASCRIPT
-================================= -->
-
 <script>
 
-/* =================================
+/* =========================
    TELEGRAM MINI APP
-================================= */
+========================= */
 
-const tg =
+if(
     window.Telegram &&
     window.Telegram.WebApp
-        ? window.Telegram.WebApp
-        : null;
-
-if (tg) {
-    tg.ready();
-    tg.expand();
+){
+    Telegram.WebApp.ready();
+    Telegram.WebApp.expand();
 }
 
 
-/* =================================
-   AGE VERIFICATION
-================================= */
+/* =========================
+   AGE GATE
+========================= */
 
-function verifyAge(isAdult) {
+function verifyAge(isAdult){
 
-    const ageGate =
-        document.getElementById("age-gate");
-
-    const termsGate =
-        document.getElementById("terms-gate");
-
-
-    if (!isAdult) {
+    if(!isAdult){
 
         alert(
-            "Sorry, you must be 18 or older to use this app."
-        );
-
-        /*
-         * App ကိုမဖွင့်ဘဲ Age Gate ကိုထားမယ်
-         */
-
-        return;
-    }
-
-
-    /*
-     * Age Gate ပျောက်
-     */
-
-    ageGate.classList.add("hidden");
-
-
-    /*
-     * Terms ပြ
-     */
-
-    termsGate.classList.remove("hidden");
-}
-
-
-/* =================================
-   TERMS ACCEPT
-================================= */
-
-function acceptTerms(accepted) {
-
-    const termsGate =
-        document.getElementById("terms-gate");
-
-
-    if (!accepted) {
-
-        alert(
-            "You must accept the Terms of Use to continue."
+            "အသက် ၁၈ နှစ်နှင့်အထက်မှသာ အသုံးပြုနိုင်ပါသည်။"
         );
 
         return;
     }
 
+    document
+        .getElementById("age-gate")
+        .classList.add("hidden");
 
-    /*
-     * Terms ပိတ်
-     */
+    document
+        .getElementById("terms-gate")
+        .classList.remove("hidden");
+}
 
-    termsGate.classList.add("hidden");
 
+/* =========================
+   TERMS
+========================= */
 
-    /*
-     * User verification ကို browser
-     * session ထဲမှာ သိမ်းထားမယ်
-     */
+function acceptTerms(accepted){
 
-    try {
+    if(!accepted){
 
-        sessionStorage.setItem(
-            "ruby_age_verified",
-            "true"
+        alert(
+            "ဆက်လက်အသုံးပြုရန် Terms ကို Accept လုပ်ပေးပါ။"
         );
 
-        sessionStorage.setItem(
-            "ruby_terms_accepted",
-            "true"
-        );
-
-    } catch (e) {
-
-        console.log(
-            "Storage unavailable"
-        );
-
+        return;
     }
+
+    document
+        .getElementById("terms-gate")
+        .classList.add("hidden");
 }
 
 
-/* =================================
-   TERMS MODAL
-================================= */
-
-function showTermsModal() {
-
-    const termsGate =
-        document.getElementById("terms-gate");
-
-    termsGate.classList.remove("hidden");
-}
-
-
-/* =================================
+/* =========================
    PAGE SWITCH
-================================= */
+========================= */
 
-function switchPage(pageName) {
+function switchPage(pageName){
 
-    const pages =
-        document.querySelectorAll(".page");
+    document
+        .querySelectorAll(".page")
+        .forEach(function(page){
 
-    const navItems =
-        document.querySelectorAll(".nav-item");
+            page.classList.remove("active");
 
+        });
 
-    /*
-     * Page အားလုံးဖျောက်
-     */
-
-    pages.forEach(function(page) {
-
-        page.classList.remove("active");
-
-    });
-
-
-    /*
-     * သွားချင်တဲ့ page ရှာ
-     */
 
     const target =
         document.getElementById(
@@ -975,147 +2067,323 @@ function switchPage(pageName) {
         );
 
 
-    if (!target) {
+    if(!target) return;
 
-        console.error(
-            "Page not found:",
-            pageName
-        );
-
-        return;
-    }
-
-
-    /*
-     * Page ပြ
-     */
 
     target.classList.add("active");
 
 
-    /*
-     * Bottom nav active state
-     */
+    document
+        .querySelectorAll(".nav-item")
+        .forEach(function(item){
 
-    navItems.forEach(function(item) {
+            item.classList.remove("active");
 
-        item.classList.remove("active");
+            if(
+                item.dataset.page === pageName
+            ){
 
-        if (
-            item.dataset.page === pageName
-        ) {
+                item.classList.add("active");
 
-            item.classList.add("active");
+            }
 
-        }
+        });
 
+
+    window.scrollTo({
+        top:0,
+        behavior:"smooth"
     });
+}
 
 
-    /*
-     * Content ကိုအပေါ်ဆုံးပြန်ထား
-     */
+/* =========================
+   RECHARGE
+========================= */
 
-    const container =
-        document.querySelector(
-            ".content-container"
+let selectedProduct = "energy";
+
+function recharge(type){
+
+    selectedProduct = type;
+
+    switchPage("recharge");
+
+    showPayment(type);
+}
+
+
+function showPayment(type){
+
+    selectedProduct = type;
+
+    const paymentSection =
+        document.getElementById(
+            "payment-section"
         );
 
-    if (container) {
-        container.scrollTop = 0;
-    }
+    paymentSection.style.display = "block";
 
+    paymentSection.scrollIntoView({
+        behavior:"smooth",
+        block:"start"
+    });
 }
 
 
-/* =================================
-   CHARACTER
-================================= */
+/* =========================
+   PAYMENT METHOD
+========================= */
 
-function openCharacter(characterName) {
+function selectPayment(method){
 
-    /*
-     * နောက်ပိုင်းမှာ ဒီနေရာက
-     * Telegram Bot / AI API ကို ချိတ်နိုင်တယ်
-     */
+    const product =
+        selectedProduct === "energy"
+        ? "Energy"
+        : "Gems";
 
-    alert(
-        characterName +
-        " chat is ready to connect."
-    );
-
-}
-
-
-/* =================================
-   PAYMENT
-================================= */
-
-function payment(method, amount) {
 
     alert(
         method +
-        " payment selected: " +
-        amount +
-        " MMK"
+        " ကိုရွေးချယ်ထားပါတယ်။\n\n" +
+        product +
+        " Payment ဆက်လုပ်နိုင်ပါပြီ။"
     );
 
+    /*
+       ဒီနေရာမှာ နောက်တစ်ဆင့်
+       KPay / WavePay / StarPay
+       payment backend ကို ချိတ်နိုင်ပါတယ်။
+    */
 }
 
 
-/* =================================
-   MESSAGE
-================================= */
+/* =========================
+   PREMIUM
+========================= */
 
-function showMessage(message) {
+function upgradePlan(){
 
-    alert(message);
-
+    alert(
+        "Premium Upgrade ကို Payment System နဲ့ ချိတ်ဆက်နိုင်ပါတယ်။"
+    );
 }
 
 
-/* =================================
-   PAGE LOAD
-================================= */
+/* =========================
+   CHARACTER
+========================= */
 
-document.addEventListener(
-    "DOMContentLoaded",
-    function() {
+function openCharacter(name){
 
-        /*
-         * အစမှာ Age Gate ကို အမြဲပြ
-         * (Testing အတွက်)
-         */
+    switchPage("chat");
 
-        const ageGate =
-            document.getElementById("age-gate");
-
-        const termsGate =
-            document.getElementById("terms-gate");
+    alert(
+        name +
+        " Chat ကို AI Bot နဲ့ ချိတ်ဆက်နိုင်ပါတယ်။"
+    );
+}
 
 
-        if (ageGate) {
-            ageGate.classList.remove("hidden");
-        }
+/* =========================
+   SETTINGS TOGGLE
+========================= */
 
-        if (termsGate) {
-            termsGate.classList.add("hidden");
-        }
+function toggleSetting(element){
+
+    const toggle =
+        element.querySelector(".toggle");
+
+    if(!toggle) return;
+
+    toggle.classList.toggle("active");
+}
 
 
-        /*
-         * Telegram Mini App မှာ
-         * click/touch event ကို မတားဆီးစေဖို့
-         */
+/* =========================
+   INFO
+========================= */
 
-        document.addEventListener(
-            "touchstart",
-            function() {},
-            { passive: true }
+function showInfo(title){
+
+    alert(
+        title +
+        "\n\nဒီ section ကို နောက်တစ်ဆင့်မှာ အသေးစိတ် content နဲ့ ချိတ်နိုင်ပါတယ်။"
+    );
+}
+
+
+/* =========================
+   TERMS
+========================= */
+
+function showTerms(){
+
+    document
+        .getElementById("terms-gate")
+        .classList.remove("hidden");
+}
+
+
+/* =========================
+   LANGUAGE
+========================= */
+
+function changeLanguage(lang){
+
+    const isEnglish =
+        lang === "en";
+
+
+    document.getElementById(
+        "welcome-title"
+    ).textContent =
+        isEnglish
+        ? "Welcome to Ruby Chan!"
+        : "Ruby Chan မှ ကြိုဆိုပါတယ်!";
+
+
+    document.getElementById(
+        "welcome-desc"
+    ).textContent =
+        isEnglish
+        ? "Your AI character chat world."
+        : "AI ဇာတ်ကောင်တွေနဲ့ စကားပြောနိုင်တဲ့ ကမ္ဘာ။";
+
+
+    document.getElementById(
+        "features-title"
+    ).textContent =
+        isEnglish
+        ? "Features"
+        : "အထူးပြုလုပ်ချက်များ";
+
+
+    document.getElementById(
+        "find-character"
+    ).textContent =
+        isEnglish
+        ? "Find Characters"
+        : "ဇာတ်ကောင်များ ရှာဖွေရန်";
+
+
+    document.getElementById(
+        "recharge-text"
+    ).textContent =
+        isEnglish
+        ? "Recharge"
+        : "Recharge";
+
+
+    document.getElementById(
+        "settings-text"
+    ).textContent =
+        isEnglish
+        ? "Settings"
+        : "ဆက်တင်";
+
+
+    document.getElementById(
+        "chat-title"
+    ).textContent =
+        isEnglish
+        ? "Chatting"
+        : "စကားပြောခြင်း";
+
+
+    document.getElementById(
+        "chat-desc"
+    ).textContent =
+        isEnglish
+        ? "Your conversations will appear here."
+        : "သင့်ရဲ့ စကားပြောမှုတွေ ဒီနေရာမှာ ပေါ်လာပါမယ်။";
+
+
+    document.getElementById(
+        "character-title"
+    ).textContent =
+        isEnglish
+        ? "Characters"
+        : "ဇာတ်ကောင်များ";
+
+
+    document.getElementById(
+        "recharge-title"
+    ).textContent =
+        isEnglish
+        ? "Recharge"
+        : "Recharge";
+
+
+    document.getElementById(
+        "settings-title"
+    ).textContent =
+        isEnglish
+        ? "Settings"
+        : "ဆက်တင်";
+
+
+    document.getElementById(
+        "nav-home"
+    ).textContent =
+        isEnglish
+        ? "Home"
+        : "ပင်မ";
+
+
+    document.getElementById(
+        "nav-chat"
+    ).textContent =
+        isEnglish
+        ? "Chatting"
+        : "စကားပြော";
+
+
+    document.getElementById(
+        "nav-character"
+    ).textContent =
+        isEnglish
+        ? "Characters"
+        : "ဇာတ်ကောင်";
+
+
+    document.getElementById(
+        "nav-settings"
+    ).textContent =
+        isEnglish
+        ? "Settings"
+        : "ဆက်တင်";
+
+
+    document.getElementById(
+        "current-language"
+    ).textContent =
+        isEnglish
+        ? "English"
+        : "မြန်မာ";
+
+
+    document
+        .getElementById("lang-en")
+        .classList.toggle(
+            "active",
+            isEnglish
         );
 
-    }
-);
+
+    document
+        .getElementById("lang-mm")
+        .classList.toggle(
+            "active",
+            !isEnglish
+        );
+}
+
+
+/* =========================
+   DEFAULT
+========================= */
+
+changeLanguage("en");
 
 </script>
-```
