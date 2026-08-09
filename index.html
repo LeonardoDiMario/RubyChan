@@ -2387,3 +2387,265 @@ function changeLanguage(lang){
 changeLanguage("en");
 
 </script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>iOS Style Age Verification & Support</title>
+    <style>
+        /* iOS Core Settings */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: #000;
+        }
+
+        /* Full Screen Blur Overlay */
+        .ios-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 999999;
+        }
+
+        /* iOS Alert Dialog Box */
+        .ios-alert {
+            background: rgba(28, 28, 30, 0.85);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            width: 290px;
+            border-radius: 14px;
+            overflow: hidden;
+            animation: iosPop 0.3s ease-out;
+            border: 0.5px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            color: #ffffff;
+            display: none; /* JS will handle display */
+        }
+
+        /* Display active tab */
+        .ios-alert.active {
+            display: block;
+        }
+
+        /* Container for content */
+        .ios-content {
+            padding: 20px 16px;
+            text-align: center;
+        }
+
+        .ios-title {
+            font-weight: 600;
+            font-size: 17px;
+            margin-bottom: 4px;
+            color: #ffffff;
+        }
+
+        .ios-title.warning {
+            color: #ff453a; /* iOS Red */
+        }
+
+        .ios-desc {
+            font-size: 13px;
+            line-height: 1.4;
+            color: #ebebf5;
+            overflow-y: auto;
+            max-height: 250px; /* For scrollable policy */
+            padding-right: 4px;
+            text-align: left;
+        }
+        
+        .center-text {
+            text-align: center;
+        }
+
+        /* Policy & Support text formatting */
+        .section-title {
+            font-weight: 600;
+            font-size: 13px;
+            margin-top: 12px;
+            margin-bottom: 2px;
+            color: #0a84ff; /* iOS Blue */
+        }
+
+        /* iOS Button Layout */
+        .ios-buttons {
+            display: flex;
+            flex-direction: column;
+            border-top: 0.5px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .ios-buttons-row {
+            display: flex;
+            flex-direction: row;
+            border-top: 0.5px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .ios-btn {
+            background: transparent;
+            border: none;
+            padding: 12px;
+            font-size: 17px;
+            color: #0a84ff;
+            cursor: pointer;
+            text-align: center;
+            width: 100%;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .ios-btn:active {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .ios-btn.bold {
+            font-weight: 600;
+        }
+
+        .ios-btn.danger {
+            color: #ff453a;
+        }
+
+        .ios-btn-row-item {
+            flex: 1;
+        }
+
+        .ios-btn-row-item:first-child {
+            border-right: 0.5px solid rgba(255, 255, 255, 0.15);
+        }
+
+        /* Footer Links inside Alert */
+        .ios-footer-links {
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-around;
+            font-size: 12px;
+        }
+
+        .ios-link {
+            color: #0a84ff;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* iOS Pop Animation */
+        @keyframes iosPop {
+            0% { transform: scale(1.15); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Custom Scrollbar for iOS Policy */
+        .ios-desc::-webkit-scrollbar {
+            width: 4px;
+        }
+        .ios-desc::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ios-overlay" id="globalOverlay">
+        
+        <!-- 1. MAIN AGE VERIFICATION ALERT -->
+        <div class="ios-alert active" id="tab-age">
+            <div class="ios-content">
+                <div class="ios-title warning">18+ Warning</div>
+                <div class="ios-desc center-text">
+                    This website contains adult-oriented content. You must be at least 18 years of age or older to enter. Do you wish to continue?
+                </div>
+                <!-- Links to view policy or get help -->
+                <div class="ios-footer-links">
+                    <span class="ios-link" onclick="switchTab('tab-privacy')">Privacy Policy</span>
+                    <span class="ios-link" onclick="switchTab('tab-support')">Help & Support</span>
+                </div>
+            </div>
+            <div class="ios-buttons-row">
+                <button class="ios-btn ios-btn-row-item danger" onclick="denyAge()">Cancel</button>
+                <button class="ios-btn ios-btn-row-item bold" onclick="acceptAge()">Agree</button>
+            </div>
+        </div>
+
+        <!-- 2. PRIVACY POLICY ALERT -->
+        <div class="ios-alert" id="tab-privacy">
+            <div class="ios-content">
+                <div class="ios-title">Privacy Policy</div>
+                <div class="ios-desc">
+                    <div class="section-title">1. Data Collection</div>
+                    We do not collect personal identities. Basic cookies are processed to analyze network connection and technical stability.
+                    
+                    <div class="section-title">2. Age Policy</div>
+                    This platform restricts access to individuals under 18. We do not knowingly retain data from minors.
+                    
+                    <div class="section-title">3. Data Security</div>
+                    Standard encryption protocol is activated to protect user sessions from third-party interception.
+                </div>
+            </div>
+            <div class="ios-buttons">
+                <button class="ios-btn bold" onclick="switchTab('tab-age')">Back</button>
+            </div>
+        </div>
+
+        <!-- 3. HELP & SUPPORT ALERT -->
+        <div class="ios-alert" id="tab-support">
+            <div class="ios-content">
+                <div class="ios-title">Help & Support</div>
+                <div class="ios-desc">
+                    <div class="section-title">App Unresponsive?</div>
+                    If the interface freezes, please clear your Telegram local cache via Settings or restart the Mini App.
+                    
+                    <div class="section-title">Contact Administrator</div>
+                    For account inquiries, content removal, or reporting bugs, submit a request directly to our customer operations core.
+                    
+                    <div class="section-title">Updates</div>
+                    Ensure Telegram and your OS Webview are operating on the latest software version.
+                </div>
+            </div>
+            <div class="ios-buttons">
+                <button class="ios-btn bold" onclick="switchTab('tab-age')">Back</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Tab switching function
+        function switchTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.ios-alert').forEach(alert => {
+                alert.classList.remove('active');
+            });
+            // Show requested tab
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // Action when user clicks AGREE
+        function acceptAge() {
+            // Close the overlay smoothly
+            document.getElementById('globalOverlay').style.display = 'none';
+        }
+
+        // Action when user clicks CANCEL
+        function denyAge() {
+            // Redirect away to standard safety site
+            window.location.href = "https://google.com";
+        }
+    </script>
+
+</body>
+</html>
