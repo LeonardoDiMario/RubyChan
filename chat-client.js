@@ -1,11 +1,11 @@
 /* Ruby Chan — Supabase character chat client */
 (function () {
-  const db = window.supabaseClient || (window.supabase && window.supabase.createClient ? window.supabase.createClient('https://hcbajvladlvhklelbxdr.supabase.co','sb_publishable_eKKXyB0rc7QUwTbbydi8Xw_t0n27eIj') : null);
+  const db = window.supabaseClient || (window.supabase && window.supabase.createClient ? window.supabase.createClient('https://hcbajvladlvhklelbxdr.supabase.co','sb_publishable_eKKXyB0rc7QUwTbbydi8Xw_t0n27eIj', { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }) : null);
   let activeCharacter = null;
   let activeConversation = null;
 
   function esc(value) {
-    return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+    return String(value ?? '').replace(/[&<>\'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   }
 
   function ensureStyles() {
@@ -95,23 +95,30 @@
     const userBubble = document.createElement('div'); userBubble.className='rk-bubble rk-user'; userBubble.textContent=message; box.appendChild(userBubble); box.scrollTop=box.scrollHeight;
     try {
       const character = await findCharacter(activeCharacter);
+
+      // The Edge Function expects the Supabase character UUID, not the Kindroid AI ID.
+      // The function then resolves characters.ai_id server-side.
       const { data, error } = await db.functions.invoke('chat', {
         body: {
-          ai_id: character.id,
+          character_id: character.id,
           message,
           conversation_id: activeConversation?.id || null
         }
       });
+
       if (error) {
         let details = error.message || String(error);
         if (error.context) {
           try {
-            const body = await error.context.json();
-            if (body?.error) details = body.details ? `${body.error}: ${body.details}` : body.error;
+            const responseBody = await error.context.json();
+            if (responseBody?.error) {
+              details = responseBody.details ? `${responseBody.error}: ${responseBody.details}` : responseBody.error;
+            }
           } catch (_) {}
         }
         throw new Error(details);
       }
+
       const reply = data?.reply || '';
       if (!reply) throw new Error('AI returned an empty reply');
       const aiBubble = document.createElement('div'); aiBubble.className='rk-bubble rk-ai'; aiBubble.textContent=reply; box.appendChild(aiBubble); box.scrollTop=box.scrollHeight;
