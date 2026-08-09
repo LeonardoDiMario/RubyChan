@@ -47,65 +47,13 @@
     const style = document.createElement('style');
     style.id = 'ruby-energy-gift-style';
     style.textContent = `
-      #rubyDailyGift{
-        position:fixed;
-        right:18px;
-        bottom:92px;
-        width:58px;
-        height:58px;
-        z-index:9998;
-        border:0;
-        border-radius:50%;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        background:linear-gradient(135deg,#7c3aed,#a855f7);
-        box-shadow:0 9px 26px rgba(124,58,237,.34),0 0 0 4px rgba(255,255,255,.86);
-        color:#fff;
-        font-size:27px;
-        cursor:pointer;
-        transition:transform .18s ease,opacity .18s ease;
-        animation:rubyGiftFloat 2.2s ease-in-out infinite;
-      }
+      #rubyDailyGift{position:fixed;right:18px;bottom:92px;width:58px;height:58px;z-index:9998;border:0;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#7c3aed,#a855f7);box-shadow:0 9px 26px rgba(124,58,237,.34),0 0 0 4px rgba(255,255,255,.86);color:#fff;font-size:27px;cursor:pointer;transition:transform .18s ease,opacity .18s ease;animation:rubyGiftFloat 2.2s ease-in-out infinite}
       #rubyDailyGift:hover{transform:scale(1.07)}
       #rubyDailyGift:active{transform:scale(.92)}
       #rubyDailyGift.claimed{display:none}
-      #rubyDailyGift .ruby-gift-badge{
-        position:absolute;
-        right:-2px;
-        top:-2px;
-        min-width:21px;
-        height:21px;
-        padding:0 5px;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        border-radius:999px;
-        background:#ff3b30;
-        color:#fff;
-        font-size:9px;
-        font-weight:900;
-        border:2px solid #fff;
-      }
+      #rubyDailyGift .ruby-gift-badge{position:absolute;right:-2px;top:-2px;min-width:21px;height:21px;padding:0 5px;display:flex;align-items:center;justify-content:center;border-radius:999px;background:#ff3b30;color:#fff;font-size:9px;font-weight:900;border:2px solid #fff}
       @keyframes rubyGiftFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
-      #rubyGiftToast{
-        position:fixed;
-        left:50%;
-        top:82px;
-        transform:translateX(-50%);
-        z-index:10001;
-        display:none;
-        max-width:calc(100vw - 32px);
-        padding:12px 17px;
-        border-radius:16px;
-        background:#fff;
-        color:#6d28d9;
-        border:1px solid rgba(124,58,237,.16);
-        box-shadow:0 12px 35px rgba(0,0,0,.15);
-        font-size:13px;
-        font-weight:800;
-        text-align:center;
-      }
+      #rubyGiftToast{position:fixed;left:50%;top:82px;transform:translateX(-50%);z-index:10001;display:none;max-width:calc(100vw - 32px);padding:12px 17px;border-radius:16px;background:#fff;color:#6d28d9;border:1px solid rgba(124,58,237,.16);box-shadow:0 12px 35px rgba(0,0,0,.15);font-size:13px;font-weight:800;text-align:center}
       #rubyGiftToast.show{display:block}
       #rubyKindroidChat{position:fixed;inset:0;z-index:10000;background:#f2f2f7;display:none;flex-direction:column}
       #rubyKindroidChat.open{display:flex}
@@ -137,7 +85,6 @@
       syncGiftVisibility();
       return;
     }
-
     const gift = document.createElement('button');
     gift.id = 'rubyDailyGift';
     gift.type = 'button';
@@ -145,7 +92,6 @@
     gift.innerHTML = '🎁<span class="ruby-gift-badge">+25</span>';
     gift.addEventListener('click', claimDailyBonus);
     document.body.appendChild(gift);
-
     const toast = document.createElement('div');
     toast.id = 'rubyGiftToast';
     document.body.appendChild(toast);
@@ -166,12 +112,7 @@
   }
 
   async function getProfile(user) {
-    const { data, error } = await db
-      .from('profiles')
-      .select('id,energy')
-      .eq('id', user.id)
-      .maybeSingle();
-
+    const { data, error } = await db.from('profiles').select('id,energy').eq('id', user.id).maybeSingle();
     if (error) throw new Error('Could not load profile: ' + error.message);
     if (!data) throw new Error('Profile not found for this account.');
     return data;
@@ -192,39 +133,25 @@
   async function changeEnergy(delta) {
     const user = await getUser();
     if (!user) throw new Error('Please login first.');
-
     const profile = await getProfile(user);
     const current = Number(profile.energy || 0);
     const next = Math.max(0, current + delta);
-
-    const { data, error } = await db
-      .from('profiles')
-      .update({ energy: next })
-      .eq('id', user.id)
-      .select('energy')
-      .single();
-
+    const { data, error } = await db.from('profiles').update({ energy: next }).eq('id', user.id).select('energy').single();
     if (error) throw new Error('Could not update energy: ' + error.message);
     updateTopEnergy(data.energy);
     return Number(data.energy);
   }
 
   async function claimDailyBonus() {
-    if (!db) return;
-    if (isDailyClaimed()) {
+    if (!db || isDailyClaimed()) {
       syncGiftVisibility();
       return;
     }
-
     const gift = document.getElementById('rubyDailyGift');
     if (gift) gift.disabled = true;
-
     try {
       const user = await getUser();
       if (!user) throw new Error('Please login first.');
-
-      // Daily claim is intentionally handled against the user's own profile row.
-      // This keeps the gift independent from the chat Edge Function.
       const newEnergy = await changeEnergy(DAILY_BONUS);
       markDailyClaimed();
       syncGiftVisibility();
@@ -240,22 +167,12 @@
     ensureDailyGift();
     let root = document.getElementById('rubyKindroidChat');
     if (root) return root;
-
     root = document.createElement('div');
     root.id = 'rubyKindroidChat';
     root.innerHTML = `
-      <div class="rk-head">
-        <button class="rk-back" id="rkBack" type="button">‹</button>
-        <div class="rk-head-info">
-          <div class="rk-title" id="rkTitle">Ruby Chan</div>
-          <div class="rk-status">● AI Chat</div>
-        </div>
-      </div>
+      <div class="rk-head"><button class="rk-back" id="rkBack" type="button">‹</button><div class="rk-head-info"><div class="rk-title" id="rkTitle">Ruby Chan</div><div class="rk-status">● AI Chat</div></div></div>
       <div class="rk-messages" id="rkMessages"><div class="rk-empty">Start a conversation ✨</div></div>
-      <form class="rk-compose" id="rkForm">
-        <input class="rk-input" id="rkInput" autocomplete="off" placeholder="Message...">
-        <button class="rk-send" id="rkSend" type="submit">➤</button>
-      </form>
+      <form class="rk-compose" id="rkForm"><input class="rk-input" id="rkInput" autocomplete="off" placeholder="Message..."><button class="rk-send" id="rkSend" type="submit">➤</button></form>
     `;
     document.body.appendChild(root);
     root.querySelector('#rkBack').onclick = () => root.classList.remove('open');
@@ -348,11 +265,7 @@
     try {
       const character = await findCharacter(activeCharacter);
       const { data, error } = await db.functions.invoke('chat', {
-        body: {
-          character_id: character.id,
-          message,
-          conversation_id: activeConversation?.id || null
-        }
+        body: { character_id: character.id, message, conversation_id: activeConversation?.id || null }
       });
 
       if (error) {
@@ -369,8 +282,9 @@
       const reply = data?.reply || '';
       if (!reply) throw new Error('AI returned an empty reply');
 
-      // Deduct one Energy only after a successful AI reply.
-      await changeEnergy(-1);
+      // Energy is deducted exactly once by the authenticated Edge Function.
+      // The client only refreshes the header value; it never deducts a second time.
+      await refreshEnergy();
 
       if (activeConversation?.id) {
         await loadMessages(activeConversation.id);
