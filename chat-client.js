@@ -1,6 +1,5 @@
-/* Ruby Chan — Kindroid chat client */
+/* Ruby Chan — Supabase character chat client */
 (function () {
-  const AI_IDS = window.RUBY_KINDROID_AI_IDS || {};
   const db = window.supabaseClient || (window.supabase && window.supabase.createClient ? window.supabase.createClient('https://hcbajvladlvhklelbxdr.supabase.co','sb_publishable_eKKXyB0rc7QUwTbbydi8Xw_t0n27eIj') : null);
   let activeCharacter = null;
   let activeConversation = null;
@@ -76,23 +75,27 @@
     if (activeConversation?.id) await loadMessages(activeConversation.id);
   }
 
+  async function findCharacterId(name) {
+    if (!db || !name) return null;
+    const { data, error } = await db.from('characters').select('id,name').eq('name', name).limit(1).maybeSingle();
+    if (error) throw new Error('Could not load character: ' + error.message);
+    if (!data?.id) throw new Error('Character not found: ' + name);
+    return data.id;
+  }
+
   async function sendMessage(event) {
     event.preventDefault();
     const input = document.getElementById('rkInput');
     const send = document.getElementById('rkSend');
     const message = input?.value.trim();
     if (!message || !activeCharacter || !db) return;
-    const aiId = AI_IDS[activeCharacter];
-    if (!aiId || aiId.startsWith('PASTE_')) {
-      showMessage('Kindroid AI ID မထည့်ရသေးပါ။ Profile Settings မှ AI ID ကိုထည့်ပါ။');
-      return;
-    }
     input.value = '';
     send.disabled = true;
     const box = document.getElementById('rkMessages');
     const userBubble = document.createElement('div'); userBubble.className='rk-bubble rk-user'; userBubble.textContent=message; box.appendChild(userBubble); box.scrollTop=box.scrollHeight;
     try {
-      const { data, error } = await db.functions.invoke('chat', { body: { ai_id: aiId, message, conversation_id: activeConversation?.id || null } });
+      const characterId = await findCharacterId(activeCharacter);
+      const { data, error } = await db.functions.invoke('chat', { body: { character_id: characterId, message, conversation_id: activeConversation?.id || null } });
       if (error) throw error;
       const reply = data?.reply || '';
       if (!reply) throw new Error('AI returned an empty reply');
@@ -104,9 +107,6 @@
     } finally { send.disabled = false; input.focus(); }
   }
 
-  window.RUBY_KINDROID_AI_IDS = window.RUBY_KINDROID_AI_IDS || {
-    Sakura:'PASTE_SAKURA_AI_ID', Yuna:'PASTE_YUNA_AI_ID', Rin:'PASTE_RIN_AI_ID', Akari:'PASTE_AKARI_AI_ID', Hana:'PASTE_HANA_AI_ID', Reina:'PASTE_REINA_AI_ID'
-  };
   window.addEventListener('rubychat:open', e => openChat(e.detail || {}));
   window.addEventListener('rubychat:loaded', e => openChat(e.detail || {}));
 })();
