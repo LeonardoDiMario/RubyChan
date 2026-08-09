@@ -18,3 +18,8 @@ const chatClient = document.createElement('script');
 chatClient.src = './chat-client.js';
 chatClient.defer = true;
 document.head.appendChild(chatClient);
+
+const premiumUI = document.createElement('script');
+premiumUI.src = './premium-ui.js';
+premiumUI.defer = true;
+document.head.appendChild(premiumUI);
