@@ -1,175 +1,178 @@
 <!DOCTYPE html>
-<html lang="my">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lucid Dream AI</title>
-    <!-- Telegram Web App SDK -->
-    <script src="https://telegram.org"></script>
-    
+    <title>Ruby Chan - 18+ AI Roleplay</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: linear-gradient(135deg, #090514, #140d2b);
-            color: #ffffff;
-            margin: 0;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: #121212; color: #ffffff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        /* 18+ Age Gate Overlay */
+        #age-gate { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 10, 10, 0.95); display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 20px; text-align: center; }
+        .gate-box { background: #1a1a1a; padding: 40px 30px; border-radius: 15px; border: 2px solid #ff4757; max-width: 400px; box-shadow: 0 0 20px rgba(255, 71, 87, 0.3); }
+        .gate-box h2 { color: #ff4757; margin-bottom: 15px; font-size: 28px; }
+        .gate-box p { color: #ccc; margin-bottom: 30px; font-size: 16px; line-height: 1.5; }
+        .gate-btns { display: flex; gap: 15px; justify-content: center; }
+        .gate-btn { padding: 12px 30px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-yes { background: #ff4757; color: white; }
+        .btn-yes:hover { background: #ff6b81; transform: scale(1.05); }
+        .btn-no { background: #2f3542; color: #a4b0be; }
+        .btn-no:hover { background: #57606f; }
 
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
+        /* Main App Header */
+        header { background: #1e1e1e; padding: 15px; text-align: center; border-bottom: 1px solid #2f3542; }
+        header h1 { color: #ff4757; font-size: 24px; letter-spacing: 1px; }
 
-        .header h1 {
-            font-size: 26px;
-            background: linear-gradient(45deg, #ff416c, #ff4b2b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin: 0;
-        }
+        /* Multi-page Content Area */
+        .content-container { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 80px; }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .header p {
-            font-size: 13px;
-            color: #8b85a3;
-            margin: 5px 0 0 0;
-        }
+        /* Character Dashboard & Buttons Grid */
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-top: 15px; }
+        .card { background: #1e1e1e; border-radius: 12px; padding: 15px; text-align: center; border: 1px solid #2f3542; transition: 0.3s; }
+        .card:hover { border-color: #ff4757; transform: translateY(-3px); }
+        .card .avatar { width: 60px; height: 60px; background: #2f3542; border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .card h3 { font-size: 16px; margin-bottom: 5px; }
+        .card p { font-size: 12px; color: #ff6b81; margin-bottom: 12px; }
+        .action-btn { width: 100%; padding: 8px; background: #ff4757; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
+        
+        /* Settings List Buttons */
+        .settings-list { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .settings-btn { background: #1e1e1e; border: 1px solid #2f3542; color: white; padding: 15px; border-radius: 10px; text-align: left; font-size: 15px; cursor: pointer; display: flex; justify-content: space-between; }
+        .settings-btn:hover { background: #2f3542; }
 
-        /* ဇာတ်ကောင် Card များ ပြသမည့်နေရာ */
-        .character-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            width: 100%;
-            max-width: 450px;
-        }
+        /* Feature Row section */
+        .welcome-box { background: linear-gradient(135deg, #ff4757, #70a1ff); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+        .welcome-box h2 { font-size: 20px; margin-bottom: 5px; }
+        .welcome-box p { font-size: 13px; opacity: 0.9; }
 
-        .char-card {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px;
-            overflow: hidden;
-            text-align: center;
-            cursor: pointer;
-            transition: 0.3s;
-            position: relative;
-        }
-
-        .char-card:hover {
-            transform: translateY(-5px);
-            border-color: #ff416c;
-            box-shadow: 0 5px 15px rgba(255, 65, 108, 0.3);
-        }
-
-        /* ဇာတ်ကောင် ပုံနေရာ (လောလောဆယ် Emoji သုံးထားသည်) */
-        .char-img {
-            height: 140px;
-            background: #251845;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 50px;
-        }
-
-        .char-info {
-            padding: 12px;
-        }
-
-        .char-name {
-            font-size: 16px;
-            font-weight: bold;
-            color: #f1f0f5;
-        }
-
-        .char-tag {
-            font-size: 11px;
-            color: #ff416c;
-            background: rgba(255, 65, 108, 0.1);
-            padding: 2px 8px;
-            border-radius: 10px;
-            display: inline-block;
-            margin-top: 5px;
-        }
-
-        /* ကန့်သတ်ချက် သတိပေးချက် */
-        .footer-text {
-            margin-top: 30px;
-            font-size: 11px;
-            color: #56506d;
-            text-align: center;
-        }
+        /* Bottom Navigation Bar */
+        nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #1e1e1e; border-top: 1px solid #2f3542; display: flex; justify-content: space-around; padding: 10px 0; z-index: 100; }
+        .nav-item { background: none; border: none; color: #a4b0be; font-size: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; font-weight: 500; }
+        .nav-item.active { color: #ff4757; }
+        .nav-icon { font-size: 20px; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>LUCID DREAM AI</h1>
-        <p>စကားပြောလိုသည့် AI ဇာတ်ကောင်ကို ရွေးချယ်ပါ</p>
+    <!-- 18+ Age Gate -->
+    <div id="age-gate">
+        <div class="gate-box">
+            <h2>အသက် ၁၈ နှစ် ပြည့်ပြီးပြီလား?</h2>
+            <p>ဤ Mini App တွင် လူကြီးကြိုက် (18+ Adult Content) အကြောင်းအရာများ ပါဝင်သောကြောင့် အသက် ၁၈ နှစ်ပြည့်ပြီးသူများသာ ဝင်ရောက်ခွင့်ရှိပါသည်။</p>
+            <div class="gate-btns">
+                <button class="gate-btn btn-yes" onclick="verifyAge(true)">ဟုတ်ကဲ့၊ ပြည့်ပါပြီ</button>
+                <button class="gate-btn btn-no" onclick="verifyAge(false)">မပြည့်သေးပါ</button>
+            </div>
+        </div>
     </div>
 
-    <!-- ဇာတ်ကောင်များ စာရင်း -->
-    <div class="character-container">
+    <!-- Main Header -->
+    <header>
+        <h1>Ruby Chan</h1>
+    </header>
+
+    <!-- Content Sections (Pages) -->
+    <div class="content-container">
         
-        <!-- ဇာတ်ကောင် ၁ -->
-        <div class="char-card" onclick="selectCharacter('Sakura', 'Anime Student')">
-            <div class="char-img">🌸</div>
-            <div class="char-info">
-                <div class="char-name">Sakura</div>
-                <div class="char-tag">18+ Tsundere</div>
+        <!-- PAGE 1: HOME -->
+        <div id="page-home" class="page active">
+            <div class="welcome-box">
+                <h2>Welcome to Ruby Chan!</h2>
+                <p>စိတ်လှုပ်ရှားစရာ ကောင်းမွန်တဲ့ 18+ AI Chat Roleplay ကမ္ဘာမှ ကြိုဆိုပါတယ်။</p>
+            </div>
+            <h3>အထူးပြုလုပ်ချက်များ</h3>
+            <div class="settings-list">
+                <button class="settings-btn" onclick="alert('Daily Rewards Claimed!')">🎁 နေ့စဉ်ဆုလာဘ်များ ရယူရန် <span>👉</span></button>
+                <button class="settings-btn" onclick="alert('VIP System Comming Soon')">👑 VIP အဖွဲ့ဝင်အဖြစ် အဆင့်မြှင့်ရန် <span>👉</span></button>
+                <button class="settings-btn" onclick="switchPage('characters')">🔥 စကားပြောရန် ဇာတ်ကောင်များ ရှာဖွေရန် <span>👉</span></button>
             </div>
         </div>
 
-        <!-- ဇာတ်ကောင် ၂ -->
-        <div class="char-card" onclick="selectCharacter('Elena', 'Vampire Queen')">
-            <div class="char-img">🧛‍♀️</div>
-            <div class="char-info">
-                <div class="char-name">Elena</div>
-                <div class="char-tag">18+ Dominant</div>
+        <!-- PAGE 2: CHARACTERS (More Cards) -->
+        <div id="page-characters" class="page">
+            <h3>ဇာတ်ကောင်များ ရွေးချယ်ပါ</h3>
+            <div class="grid-container">
+                <div class="card">
+                    <div class="avatar">🌸</div>
+                    <h3>Sakura</h3>
+                    <p>18+ Tsundere</p>
+                    <button class="action-btn" onclick="alert('Sakura နှင့် စကားပြောစနစ် မကြာမီလာမည်')">Chat</button>
+                </div>
+                <div class="card">
+                    <div class="avatar">🧛‍♀️</div>
+                    <h3>Elena</h3>
+                    <p>18+ Dominant</p>
+                    <button class="action-btn" onclick="alert('Elena နှင့် စကားပြောစနစ် မကြာမီလာမည်')">Chat</button>
+                </div>
+                <div class="card">
+                    <div class="avatar">🤖</div>
+                    <h3>Alpha</h3>
+                    <p>18+ Cool Guy</p>
+                    <button class="action-btn" onclick="alert('Alpha နှင့် စကားပြောစနစ် မကြာမီလာမည်')">Chat</button>
+                </div>
+                <div class="card">
+                    <div class="avatar">💼</div>
+                    <h3>Lisa</h3>
+                    <p>18+ Romance</p>
+                    <button class="action-btn" onclick="alert('Lisa နှင့် စကားပြောစနစ် မကြာမီလာမည်')">Chat</button>
+                </div>
             </div>
         </div>
 
-        <!-- ဇာတ်ကောင် ၃ -->
-        <div class="char-card" onclick="selectCharacter('Alpha', 'Cyber Bodyguard')">
-            <div class="char-img">🤖</div>
-            <div class="char-info">
-                <div class="char-name">Alpha</div>
-                <div class="char-tag">18+ Cool Guy</div>
-            </div>
-        </div>
-
-        <!-- ဇာတ်ကောင် ၄ -->
-        <div class="char-card" onclick="selectCharacter('Lisa', 'Office Secretary')">
-            <div class="char-img">💼</div>
-            <div class="char-info">
-                <div class="char-name">Lisa</div>
-                <div class="char-tag">18+ Romance</div>
+        <!-- PAGE 3: SETTINGS -->
+        <div id="page-settings" class="page">
+            <h3>အထွေထွေ ဆက်တင်များ</h3>
+            <div class="settings-list">
+                <button class="settings-btn" onclick="alert('မြန်မာဘာသာစကားကို ရွေးချယ်ထားပါတယ်')">🌐 Language: မြန်မာ <span>⚙️</span></button>
+                <button class="settings-btn" onclick="alert('Dark Mode Activated')">🌙 Dark Mode: On <span>⚙️</span></button>
+                <button class="settings-btn" onclick="alert('Clear Cache Complete')">🧹 Clear Bot Cache <span>⚙️</span></button>
+                <button class="settings-btn" onclick="alert('Ruby Chan Bot v1.0.0')">ℹ️ About App <span>⚙️</span></button>
             </div>
         </div>
 
     </div>
 
-    <div class="footer-text">
-        This app contains 18+ adult content. Strictly for users over 18.
-    </div>
+    <!-- Bottom Navigation Tabs -->
+    <nav>
+        <button class="nav-item active" id="btn-home" onclick="switchPage('home')">
+            <span class="nav-icon">🏠</span>
+            <span>Home</span>
+        </button>
+        <button class="nav-item" id="btn-characters" onclick="switchPage('characters')">
+            <span class="nav-icon">💬</span>
+            <span>Characters</span>
+        </button>
+        <button class="nav-item" id="btn-settings" onclick="switchPage('settings')">
+            <span class="nav-icon">⚙️</span>
+            <span>Settings</span>
+        </button>
+    </nav>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
+        // Age Verification Logic
+        function verifyAge(isOfAge) {
+            if (isOfAge) {
+                document.getElementById('age-gate').style.display = 'none';
+            } else {
+                alert('စိတ်မကောင်းပါဘူး၊ အသက် ၁၈ နှစ်ပြည့်မှသာ အသုံးပြုနိုင်ပါသည်။');
+                window.location.href = "https://telegram.org"; // Redirect if No
+            }
+        }
 
-        // ဇာတ်ကောင်တစ်ခုခုကို နှိပ်လိုက်လျှင် လုပ်ဆောင်မည့်အလုပ်
-        function selectCharacter(name, type) {
-            // Telegram Bot Chat ထဲသို့ ဇာတ်ကောင်နာမည်ကို လှမ်းပို့လိုက်ခြင်း
-            tg.sendData(JSON.stringify({
-                action: "start_chat",
-                character_name: name,
-                character_type: type
-            }));
+        // Multi-page Navigation Logic
+        function switchPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            // Show target page
+            document.getElementById('page-' + pageId).classList.add('active');
             
-            // App ကို ပိတ်လိုက်မည်
-            tg.close();
+            // Update active state on nav buttons
+            document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-' + pageId).classList.add('active');
         }
     </script>
 </body>
