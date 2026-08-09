@@ -68,6 +68,9 @@
   async function openChat(detail) {
     activeCharacter = detail.character;
     activeConversation = detail.conversation || null;
+    if (!activeConversation?.id && window.rubyCurrentConversation) {
+      activeConversation = { id: window.rubyCurrentConversation };
+    }
     const root = ensureUI();
     root.querySelector('#rkTitle').textContent = activeCharacter || 'Ruby Chan';
     root.classList.add('open');
@@ -89,15 +92,25 @@
     const send = document.getElementById('rkSend');
     const message = input?.value.trim();
     if (!message || !activeCharacter || !db) return;
+
+    if (!activeConversation?.id && window.rubyCurrentConversation) {
+      activeConversation = { id: window.rubyCurrentConversation };
+    }
+
     input.value = '';
     send.disabled = true;
     const box = document.getElementById('rkMessages');
-    const userBubble = document.createElement('div'); userBubble.className='rk-bubble rk-user'; userBubble.textContent=message; box.appendChild(userBubble); box.scrollTop=box.scrollHeight;
+
+    // Show the user's message immediately.
+    const userBubble = document.createElement('div');
+    userBubble.className = 'rk-bubble rk-user';
+    userBubble.textContent = message;
+    box.appendChild(userBubble);
+    box.scrollTop = box.scrollHeight;
+
     try {
       const character = await findCharacter(activeCharacter);
 
-      // The Edge Function expects the Supabase character UUID, not the Kindroid AI ID.
-      // The function then resolves characters.ai_id server-side.
       const { data, error } = await db.functions.invoke('chat', {
         body: {
           character_id: character.id,
@@ -121,12 +134,31 @@
 
       const reply = data?.reply || '';
       if (!reply) throw new Error('AI returned an empty reply');
-      const aiBubble = document.createElement('div'); aiBubble.className='rk-bubble rk-ai'; aiBubble.textContent=reply; box.appendChild(aiBubble); box.scrollTop=box.scrollHeight;
-      window.rubyChatSaveMessage?.('assistant', reply);
+
+      // The Edge Function already saves both the user message and AI reply.
+      // Reload the conversation so both bubbles are rendered from the database.
+      if (activeConversation?.id) {
+        await loadMessages(activeConversation.id);
+      } else if (window.rubyCurrentConversation) {
+        activeConversation = { id: window.rubyCurrentConversation };
+        await loadMessages(activeConversation.id);
+      } else {
+        const aiBubble = document.createElement('div');
+        aiBubble.className = 'rk-bubble rk-ai';
+        aiBubble.textContent = reply;
+        box.appendChild(aiBubble);
+        box.scrollTop = box.scrollHeight;
+      }
     } catch (err) {
-      const e = document.createElement('div'); e.className='rk-error'; e.textContent='Chat error: ' + (err?.message || err); box.appendChild(e);
+      const e = document.createElement('div');
+      e.className = 'rk-error';
+      e.textContent = 'Chat error: ' + (err?.message || err);
+      box.appendChild(e);
       input.value = message;
-    } finally { send.disabled = false; input.focus(); }
+    } finally {
+      send.disabled = false;
+      input.focus();
+    }
   }
 
   window.addEventListener('rubychat:open', e => openChat(e.detail || {}));
