@@ -75,12 +75,12 @@
     if (activeConversation?.id) await loadMessages(activeConversation.id);
   }
 
-  async function findCharacterId(name) {
+  async function findCharacter(name) {
     if (!db || !name) return null;
     const { data, error } = await db.from('characters').select('id,name').eq('name', name).limit(1).maybeSingle();
     if (error) throw new Error('Could not load character: ' + error.message);
     if (!data?.id) throw new Error('Character not found: ' + name);
-    return data.id;
+    return data;
   }
 
   async function sendMessage(event) {
@@ -94,9 +94,24 @@
     const box = document.getElementById('rkMessages');
     const userBubble = document.createElement('div'); userBubble.className='rk-bubble rk-user'; userBubble.textContent=message; box.appendChild(userBubble); box.scrollTop=box.scrollHeight;
     try {
-      const characterId = await findCharacterId(activeCharacter);
-      const { data, error } = await db.functions.invoke('chat', { body: { character_id: characterId, message, conversation_id: activeConversation?.id || null } });
-      if (error) throw error;
+      const character = await findCharacter(activeCharacter);
+      const { data, error } = await db.functions.invoke('chat', {
+        body: {
+          ai_id: character.id,
+          message,
+          conversation_id: activeConversation?.id || null
+        }
+      });
+      if (error) {
+        let details = error.message || String(error);
+        if (error.context) {
+          try {
+            const body = await error.context.json();
+            if (body?.error) details = body.details ? `${body.error}: ${body.details}` : body.error;
+          } catch (_) {}
+        }
+        throw new Error(details);
+      }
       const reply = data?.reply || '';
       if (!reply) throw new Error('AI returned an empty reply');
       const aiBubble = document.createElement('div'); aiBubble.className='rk-bubble rk-ai'; aiBubble.textContent=reply; box.appendChild(aiBubble); box.scrollTop=box.scrollHeight;
