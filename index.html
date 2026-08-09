@@ -1,159 +1,1121 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ruby Chan - 18+ AI Roleplay</title>
-    <!-- Telegram WebApp SDK -->
-    <script src="https://telegram.org"></script>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: #121212; color: #ffffff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        
-        /* Overlays (Age Gate & Terms of Use) */
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 10, 10, 0.98); display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 20px; text-align: center; }
-        .popup-box { background: #1a1a1a; padding: 35px 25px; border-radius: 15px; border: 2px solid #ff4757; max-width: 420px; box-shadow: 0 0 25px rgba(255, 71, 87, 0.3); width: 100%; }
-        .popup-box h2 { color: #ff4757; margin-bottom: 15px; font-size: 24px; }
-        .popup-box p { color: #ccc; margin-bottom: 25px; font-size: 15px; line-height: 1.5; }
-        
-        .terms-text { background: #121212; border: 1px solid #2f3542; padding: 15px; border-radius: 8px; max-height: 180px; overflow-y: auto; text-align: left; font-size: 13px; color: #a4b0be; margin-bottom: 25px; line-height: 1.6; }
-        .terms-text strong { color: #ff6b81; }
+```html
+<style>
+/* ================================
+   OVERLAY / AGE GATE / TERMS
+================================ */
 
-        .btn-group { display: flex; gap: 15px; justify-content: center; }
-        .popup-btn { padding: 12px 25px; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.2s; width: 100%; }
-        .btn-danger { background: #ff4757; color: white; }
-        .btn-danger:hover { background: #ff6b81; transform: scale(1.02); }
-        .btn-secondary { background: #2f3542; color: #a4b0be; }
-        .btn-secondary:hover { background: #57606f; }
+.overlay {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 10, 10, 0.98);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+    padding: 20px;
+    text-align: center;
+    box-sizing: border-box;
+}
 
-        /* Main Header */
-        header { background: #1e1e1e; padding: 15px; text-align: center; border-bottom: 1px solid #2f3542; }
-        header h1 { color: #ff4757; font-size: 24px; letter-spacing: 1px; }
+.overlay.hidden {
+    display: none !important;
+    pointer-events: none !important;
+}
 
-        /* Content Area */
-        .content-container { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 80px; }
-        .page { display: none; }
-        .page.active { display: block; animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.popup-box {
+    background: #1a1a1a;
+    padding: 35px 25px;
+    border-radius: 15px;
+    border: 2px solid #ff4757;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 0 25px rgba(255, 71, 87, 0.3);
+    box-sizing: border-box;
+}
 
-        /* Layout Elements */
-        .welcome-box { background: linear-gradient(135deg, #ff4757, #70a1ff); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
-        .welcome-box h2 { font-size: 20px; margin-bottom: 5px; }
-        .welcome-box p { font-size: 13px; opacity: 0.9; }
+.popup-box h2 {
+    color: #ff4757;
+    margin: 0 0 15px;
+    font-size: 24px;
+}
 
-        .settings-list { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
-        .settings-btn { background: #1e1e1e; border: 1px solid #2f3542; color: white; padding: 15px; border-radius: 10px; text-align: left; font-size: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .settings-btn:hover { background: #2f3542; }
+.popup-box p {
+    color: #ccc;
+    margin: 0 0 25px;
+    font-size: 15px;
+    line-height: 1.5;
+}
 
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-top: 15px; }
-        .card { background: #1e1e1e; border-radius: 12px; padding: 15px; text-align: center; border: 1px solid #2f3542; transition: 0.3s; }
-        .card .avatar { width: 60px; height: 60px; background: #2f3542; border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
-        .action-btn { width: 100%; padding: 8px; background: #ff4757; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
+.terms-text {
+    background: #121212;
+    border: 1px solid #2f3542;
+    padding: 15px;
+    border-radius: 8px;
+    max-height: 180px;
+    overflow-y: auto;
+    text-align: left;
+    font-size: 13px;
+    color: #a4b0be;
+    margin-bottom: 25px;
+    line-height: 1.6;
+}
 
-        /* Upgrade Premium System Cards */
-        .pay-card { background: #1e1e1e; border: 1px solid #2f3542; border-radius: 12px; padding: 20px; margin-bottom: 15px; border-left: 5px solid #ff4757; text-align: left; }
-        .pay-card h4 { font-size: 18px; color: #ff6b81; margin-bottom: 5px; }
-        .pay-card .price { font-size: 22px; font-weight: bold; margin-bottom: 15px; color: #fff; }
-        .pay-methods { display: flex; gap: 10px; }
-        .method-btn { flex: 1; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-align: center; font-size: 12px; }
-        .btn-kpay { background: #0066cc; color: white; }
-        .btn-wave { background: #fbc531; color: #000; }
-        .badge { background: #2f3542; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; color: #ff4757; }
+.terms-text strong {
+    color: #ff6b81;
+}
 
-        /* Bottom Nav */
-        nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #1e1e1e; border-top: 1px solid #2f3542; display: flex; justify-content: space-around; padding: 10px 0; z-index: 100; }
-        .nav-item { background: none; border: none; color: #a4b0be; font-size: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; }
-        .nav-item.active { color: #ff4757; }
-        .nav-icon { font-size: 20px; }
-    </style>
-</head>
-<body>
+.btn-group {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
 
-    <!-- STAGE 1: 18+ Age Gate -->
-    <div id="age-gate" class="overlay">
-        <div class="popup-box">
-            <h2 id="lang-age-title">အသက် ၁၈ နှစ် ပြည့်ပြီးပြီလား?</h2>
-            <p id="lang-age-desc">ဤ Mini App တွင် လူကြီးကြိုက် (18+ Adult Content) အကြောင်းအရာများ ပါဝင်သောကြောင့် အသက် ၁၈ နှစ်ပြည့်ပြီးသူများသာ ဝင်ရောက်ခွင့်ရှိပါသည်။</p>
-            <div class="btn-group">
-                <button class="popup-btn btn-danger" id="lang-age-yes" onclick="verifyAge(true)">ဟုတ်ကဲ့၊ ပြည့်ပါပြီ</button>
-                <button class="popup-btn btn-secondary" id="lang-age-no" onclick="verifyAge(false)">မပြည့်သေးပါ</button>
-            </div>
+.popup-btn {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+
+    /* Telegram / mobile touch */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+
+    transition: 0.2s;
+    width: 100%;
+}
+
+.btn-danger {
+    background: #ff4757;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #ff6b81;
+    transform: scale(1.02);
+}
+
+.btn-secondary {
+    background: #2f3542;
+    color: #a4b0be;
+}
+
+.btn-secondary:hover {
+    background: #57606f;
+}
+
+
+/* ================================
+   HEADER
+================================ */
+
+header {
+    background: #1e1e1e;
+    padding: 15px;
+    text-align: center;
+    border-bottom: 1px solid #2f3542;
+}
+
+header h1 {
+    color: #ff4757;
+    font-size: 24px;
+    letter-spacing: 1px;
+    margin: 0;
+}
+
+
+/* ================================
+   CONTENT
+================================ */
+
+.content-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    padding-bottom: 90px;
+    box-sizing: border-box;
+}
+
+.page {
+    display: none;
+}
+
+.page.active {
+    display: block;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+
+/* ================================
+   HOME
+================================ */
+
+.welcome-box {
+    background: linear-gradient(135deg, #ff4757, #70a1ff);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.welcome-box h2 {
+    font-size: 20px;
+    margin: 0 0 5px;
+}
+
+.welcome-box p {
+    font-size: 13px;
+    opacity: 0.9;
+    margin: 0;
+}
+
+.settings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.settings-btn {
+    background: #1e1e1e;
+    border: 1px solid #2f3542;
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: left;
+    font-size: 15px;
+    cursor: pointer;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    width: 100%;
+
+    /* IMPORTANT FOR TELEGRAM */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.settings-btn:hover {
+    background: #2f3542;
+}
+
+
+/* ================================
+   CHARACTER CARDS
+================================ */
+
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.card {
+    background: #1e1e1e;
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    border: 1px solid #2f3542;
+    transition: 0.3s;
+}
+
+.card .avatar {
+    width: 60px;
+    height: 60px;
+    background: #2f3542;
+    border-radius: 50%;
+    margin: 0 auto 10px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 24px;
+}
+
+.action-btn {
+    width: 100%;
+    padding: 10px;
+    background: #ff4757;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 13px;
+
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+
+/* ================================
+   PREMIUM
+================================ */
+
+.pay-card {
+    background: #1e1e1e;
+    border: 1px solid #2f3542;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 15px;
+    border-left: 5px solid #ff4757;
+    text-align: left;
+}
+
+.pay-card h4 {
+    font-size: 18px;
+    color: #ff6b81;
+    margin: 0 0 5px;
+}
+
+.pay-card .price {
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #fff;
+}
+
+.pay-methods {
+    display: flex;
+    gap: 10px;
+}
+
+.method-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+    font-size: 12px;
+
+    touch-action: manipulation;
+}
+
+.btn-kpay {
+    background: #0066cc;
+    color: white;
+}
+
+.btn-wave {
+    background: #fbc531;
+    color: #000;
+}
+
+.badge {
+    background: #2f3542;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: bold;
+    color: #ff4757;
+}
+
+
+/* ================================
+   BOTTOM NAV
+================================ */
+
+nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+
+    background: #1e1e1e;
+    border-top: 1px solid #2f3542;
+
+    display: flex;
+    justify-content: space-around;
+
+    padding: 10px 0;
+
+    z-index: 1000;
+}
+
+.nav-item {
+    background: none;
+    border: none;
+    color: #a4b0be;
+
+    font-size: 12px;
+    cursor: pointer;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+
+    padding: 5px 20px;
+
+    /* Telegram touch */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.nav-item.active {
+    color: #ff4757;
+}
+
+.nav-icon {
+    font-size: 20px;
+}
+
+
+/* ================================
+   MOBILE
+================================ */
+
+@media (max-width: 480px) {
+
+    .popup-box {
+        padding: 25px 18px;
+    }
+
+    .popup-box h2 {
+        font-size: 21px;
+    }
+
+    .btn-group {
+        gap: 10px;
+    }
+
+    .popup-btn {
+        padding: 11px 10px;
+        font-size: 14px;
+    }
+
+    .content-container {
+        padding: 15px;
+        padding-bottom: 90px;
+    }
+}
+</style>
+
+
+<!-- =================================
+     STAGE 1 — AGE GATE
+================================= -->
+
+<div id="age-gate" class="overlay">
+
+    <div class="popup-box">
+
+        <h2>
+            အသက် ၁၈ နှစ် ပြည့်ပြီးပြီလား?
+        </h2>
+
+        <p>
+            ဤ Mini App တွင် လူကြီးကြိုက် (18+ Adult Content)
+            အကြောင်းအရာများ ပါဝင်သောကြောင့် အသက် ၁၈ နှစ်ပြည့်ပြီးသူများသာ
+            ဝင်ရောက်ခွင့်ရှိပါသည်။
+        </p>
+
+        <div class="btn-group">
+
+            <button
+                class="popup-btn btn-danger"
+                type="button"
+                onclick="verifyAge(true)"
+            >
+                ဟုတ်ကဲ့၊ ပြည့်ပါပြီ
+            </button>
+
+            <button
+                class="popup-btn btn-secondary"
+                type="button"
+                onclick="verifyAge(false)"
+            >
+                မပြည့်သေးပါ
+            </button>
+
         </div>
+
     </div>
 
-    <!-- STAGE 2: Terms of Use -->
-    <div id="terms-gate" class="overlay" style="display: none;">
-        <div class="popup-box">
-            <h2 id="lang-terms-title">Terms of Use</h2>
-            <p id="lang-terms-desc">ကျေးဇူးပြု၍ အောက်ပါအသုံးပြုမှု စည်းကမ်းချက်များကို ဖတ်ရှုပြီး သဘောတူညီပေးပါရန်။</p>
-            
-            <div class="terms-text" id="lang-terms-content">
-                <strong>၁။ အသက်ကန့်သတ်ချက်</strong><br>ဤ App ကို အသက် ၁၈ နှစ်ပြည့်ပြီးသူများသာ အသုံးပြုခွင့်ရှိသည်။<br><br>
-                <strong>၂။ အကြောင်းအရာများ</strong><br>ဤနေရာတွင် တွေ့ရှိရသော စာသားများနှင့် ဇာတ်ကောင်များသည် AI နည်းပညာဖြင့် ဖန်တီးထားသော စိတ်ကူးယဉ် သရုပ်ဆောင်မှုများသာ ဖြစ်သည်။ တကယ့်လူသားများနှင့် သက်ဆိုင်ခြင်းမရှိပါ။<br><br>
-                <strong>၃။ လုံခြုံရေးနှင့် လျှို့ဝှက်ချက်</strong><br>သင်နှင့် AI တို့ ပြောဆိုသော စကားလုံးများကို မည်သည့်နေရာတွင်မှ မျှဝေခြင်း သို့မဟုတ် သိမ်းဆည်းခြင်း ပြုလုပ်မည်မဟုတ်ပါ။
-            </div>
+</div>
 
-            <div class="btn-group">
-                <button class="popup-btn btn-danger" id="lang-terms-accept" onclick="acceptTerms(true)">သဘောတူပါသည် (Accept)</button>
-                <button class="popup-btn btn-secondary" id="lang-terms-decline" onclick="acceptTerms(false)">ငြင်းပယ်မည်</button>
-            </div>
+
+<!-- =================================
+     STAGE 2 — TERMS
+================================= -->
+
+<div
+    id="terms-gate"
+    class="overlay hidden"
+>
+
+    <div class="popup-box">
+
+        <h2>
+            Terms of Use
+        </h2>
+
+        <p>
+            ကျေးဇူးပြု၍ အောက်ပါအသုံးပြုမှု
+            စည်းကမ်းချက်များကို ဖတ်ရှုပြီး
+            သဘောတူညီပေးပါရန်။
+        </p>
+
+        <div class="terms-text">
+
+            <strong>၁။ အသက်ကန့်သတ်ချက်</strong><br>
+
+            ဤ App ကို အသက် ၁၈ နှစ်ပြည့်ပြီးသူများသာ
+            အသုံးပြုခွင့်ရှိသည်။
+
+            <br><br>
+
+            <strong>၂။ အကြောင်းအရာများ</strong><br>
+
+            ဤနေရာတွင် တွေ့ရှိရသော စာသားများနှင့်
+            ဇာတ်ကောင်များသည် AI နည်းပညာဖြင့်
+            ဖန်တီးထားသော စိတ်ကူးယဉ် သရုပ်ဆောင်မှုများသာ ဖြစ်သည်။
+
+            <br><br>
+
+            <strong>၃။ လုံခြုံရေးနှင့် လျှို့ဝှက်ချက်</strong><br>
+
+            သင်နှင့် AI တို့ ပြောဆိုသော စကားလုံးများကို
+            မည်သည့်နေရာတွင်မှ မျှဝေခြင်း သို့မဟုတ်
+            သိမ်းဆည်းခြင်း ပြုလုပ်မည်မဟုတ်ပါ။
+
         </div>
+
+        <div class="btn-group">
+
+            <button
+                class="popup-btn btn-danger"
+                type="button"
+                onclick="acceptTerms(true)"
+            >
+                သဘောတူပါသည် (Accept)
+            </button>
+
+            <button
+                class="popup-btn btn-secondary"
+                type="button"
+                onclick="acceptTerms(false)"
+            >
+                ငြင်းပယ်မည်
+            </button>
+
+        </div>
+
     </div>
 
-    <!-- Header -->
-    <header>
-        <h1>Ruby Chan</h1>
-    </header>
+</div>
 
-    <!-- App Content -->
-    <div class="content-container">
-        
-        <!-- PAGE 1: HOME -->
-        <div id="page-home" class="page active">
-            <div class="welcome-box">
-                <h2 id="lang-welcome-title">Welcome to Ruby Chan!</h2>
-                <p id="lang-welcome-desc">စိတ်လှုပ်ရှားစရာ ကောင်းမွန်တဲ့ 18+ AI Chat Roleplay ကမ္ဘာမှ ကြိုဆိုပါတယ်။</p>
-            </div>
-            <h3 id="lang-home-features">အထူးပြုလုပ်ချက်များ</h3>
-            <div class="settings-list">
-                <button class="settings-btn" onclick="switchPage('upgrade')">⭐ <span id="lang-btn-upgrade">Premium Upgrade တင်ရန်</span> <span class="badge">🔥 VIP</span></button>
-                <button class="settings-btn" onclick="switchPage('characters')">🔥 <span id="lang-btn-findchar">စကားပြောရန် ဇာတ်ကောင်များ ရှာဖွေရန်</span> <span>👉</span></button>
-                <button class="settings-btn" onclick="showTermsModal()">📄 <span id="lang-btn-terms">Terms of Use ပြန်ဖတ်ရန်</span> <span>👉</span></button>
-            </div>
+
+<!-- =================================
+     HEADER
+================================= -->
+
+<header>
+
+    <h1>Ruby Chan</h1>
+
+</header>
+
+
+<!-- =================================
+     CONTENT
+================================= -->
+
+<div class="content-container">
+
+
+    <!-- HOME -->
+
+    <div
+        id="page-home"
+        class="page active"
+    >
+
+        <div class="welcome-box">
+
+            <h2>
+                Welcome to Ruby Chan!
+            </h2>
+
+            <p>
+                စိတ်လှုပ်ရှားစရာကောင်းမွန်တဲ့
+                18+ AI Chat Roleplay ကမ္ဘာမှ ကြိုဆိုပါတယ်။
+            </p>
+
         </div>
 
-        <!-- PAGE 2: CHARACTERS -->
-        <div id="page-characters" class="page">
-            <h3 id="lang-char-title">ဇာတ်ကောင်များ ရွေးချယ်ပါ</h3>
-            <div class="grid-container">
-                <div class="card">
-                    <div class="avatar">🌸</div>
-                    <h3>Sakura</h3>
-                    <p>18+ Tsundere</p>
-                    <button class="action-btn" onclick="alert('Chat comming soon')">Chat</button>
-                </div>
-                <div class="card">
-                    <div class="avatar">🧛‍♀️</div>
-                    <h3>Elena</h3>
-                    <p>18+ Dominant</p>
-                    <button class="action-btn" onclick="alert('Chat comming soon')">Chat</button>
-                </div>
-            </div>
+
+        <h3>
+            အထူးပြုလုပ်ချက်များ
+        </h3>
+
+
+        <div class="settings-list">
+
+            <button
+                type="button"
+                class="settings-btn"
+                onclick="switchPage('upgrade')"
+            >
+                <span>⭐ Premium Upgrade တင်ရန်</span>
+                <span class="badge">🔥 VIP</span>
+            </button>
+
+
+            <button
+                type="button"
+                class="settings-btn"
+                onclick="switchPage('characters')"
+            >
+                <span>🔥 စကားပြောရန် ဇာတ်ကောင်များ ရှာဖွေရန်</span>
+                <span>👉</span>
+            </button>
+
+
+            <button
+                type="button"
+                class="settings-btn"
+                onclick="showTermsModal()"
+            >
+                <span>📄 Terms of Use ပြန်ဖတ်ရန်</span>
+                <span>👉</span>
+            </button>
+
         </div>
 
-        <!-- PAGE 3: UPGRADE PLAN -->
-        <div id="page-upgrade" class="page">
-            <h3 id="lang-up-title">Premium အစီအစဉ်များ</h3>
-            <p style="font-size: 13px; color:#aaa; margin-bottom:15px;" id="lang-up-desc">VIP အဖွဲ့ဝင်ဝင်ပြီး စကားပြောကန့်သတ်ချက်မဲ့ ရယူပါ။</p>
-            
-            <!-- Free Plan -->
-            <div class="pay-card" style="border-left-color: #57606f;">
-                <h4 id="lang-plan-free-title">Free Plan</h4>
-                <div class="price" id="lang-plan-free-price">0 MMK / Forever</div>
-                <button class="action-btn" style="background:#57606f;" id="lang-plan-free-btn" onclick="alert('You are already using Free Plan')">Current Plan</button>
+    </div>
+
+
+    <!-- CHARACTERS -->
+
+    <div
+        id="page-characters"
+        class="page"
+    >
+
+        <h3>
+            ဇာတ်ကောင်များ ရွေးချယ်ပါ
+        </h3>
+
+
+        <div class="grid-container">
+
+
+            <div class="card">
+
+                <div class="avatar">
+                    🌸
+                </div>
+
+                <h3>
+                    Sakura
+                </h3>
+
+                <p>
+                    18+ Tsundere
+                </p>
+
+                <button
+                    type="button"
+                    class="action-btn"
+                    onclick="openCharacter('Sakura')"
+                >
+                    Chat
+                </button>
+
             </div>
 
-            <!-- 1 Month -->
-            <div class="pay-card">
-                <h4 id="lang-plan-1m-title">Premium 1 Month</h4>
-                <div class="price">5,000 MMK</div>
+
+            <div class="card">
+
+                <div class="avatar">
+                    🧛‍♀️
+                </div>
+
+                <h3>
+                    Elena
+                </h3>
+
+                <p>
+                    18+ Dominant
+                </p>
+
+                <button
+                    type="button"
+                    class="action-btn"
+                    onclick="openCharacter('Elena')"
+                >
+                    Chat
+                </button>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+    <!-- UPGRADE -->
+
+    <div
+        id="page-upgrade"
+        class="page"
+    >
+
+        <h3>
+            Premium အစီအစဉ်များ
+        </h3>
+
+        <p
+            style="
+                font-size:13px;
+                color:#aaa;
+                margin-bottom:15px;
+            "
+        >
+            VIP အဖွဲ့ဝင်ဝင်ပြီး
+            စကားပြောကန့်သတ်ချက်မဲ့ ရယူပါ။
+        </p>
+
+
+        <!-- FREE -->
+
+        <div
+            class="pay-card"
+            style="border-left-color:#57606f;"
+        >
+
+            <h4>
+                Free Plan
+            </h4>
+
+            <div class="price">
+                0 MMK / Forever
+            </div>
+
+            <button
+                type="button"
+                class="action-btn"
+                style="background:#57606f;"
+                onclick="showMessage('You are already using Free Plan')"
+            >
+                Current Plan
+            </button>
+
+        </div>
+
+
+        <!-- PREMIUM -->
+
+        <div class="pay-card">
+
+            <h4>
+                Premium 1 Month
+            </h4>
+
+            <div class="price">
+                5,000 MMK
+            </div>
+
+            <div class="pay-methods">
+
+                <button
+                    type="button"
+                    class="method-btn btn-kpay"
+                    onclick="payment('KPay', 5000)"
+                >
+                    KPay
+                </button>
+
+                <button
+                    type="button"
+                    class="method-btn btn-wave"
+                    onclick="payment('WavePay', 5000)"
+                >
+                    WavePay
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =================================
+     BOTTOM NAV
+================================= -->
+
+<nav>
+
+    <button
+        type="button"
+        class="nav-item active"
+        data-page="home"
+        onclick="switchPage('home')"
+    >
+
+        <span class="nav-icon">🏠</span>
+        <span>Home</span>
+
+    </button>
+
+
+    <button
+        type="button"
+        class="nav-item"
+        data-page="characters"
+        onclick="switchPage('characters')"
+    >
+
+        <span class="nav-icon">👥</span>
+        <span>Characters</span>
+
+    </button>
+
+
+    <button
+        type="button"
+        class="nav-item"
+        data-page="upgrade"
+        onclick="switchPage('upgrade')"
+    >
+
+        <span class="nav-icon">⭐</span>
+        <span>Premium</span>
+
+    </button>
+
+</nav>
+
+
+<!-- =================================
+     JAVASCRIPT
+================================= -->
+
+<script>
+
+/* =================================
+   TELEGRAM MINI APP
+================================= */
+
+const tg =
+    window.Telegram &&
+    window.Telegram.WebApp
+        ? window.Telegram.WebApp
+        : null;
+
+if (tg) {
+    tg.ready();
+    tg.expand();
+}
+
+
+/* =================================
+   AGE VERIFICATION
+================================= */
+
+function verifyAge(isAdult) {
+
+    const ageGate =
+        document.getElementById("age-gate");
+
+    const termsGate =
+        document.getElementById("terms-gate");
+
+
+    if (!isAdult) {
+
+        alert(
+            "Sorry, you must be 18 or older to use this app."
+        );
+
+        /*
+         * App ကိုမဖွင့်ဘဲ Age Gate ကိုထားမယ်
+         */
+
+        return;
+    }
+
+
+    /*
+     * Age Gate ပျောက်
+     */
+
+    ageGate.classList.add("hidden");
+
+
+    /*
+     * Terms ပြ
+     */
+
+    termsGate.classList.remove("hidden");
+}
+
+
+/* =================================
+   TERMS ACCEPT
+================================= */
+
+function acceptTerms(accepted) {
+
+    const termsGate =
+        document.getElementById("terms-gate");
+
+
+    if (!accepted) {
+
+        alert(
+            "You must accept the Terms of Use to continue."
+        );
+
+        return;
+    }
+
+
+    /*
+     * Terms ပိတ်
+     */
+
+    termsGate.classList.add("hidden");
+
+
+    /*
+     * User verification ကို browser
+     * session ထဲမှာ သိမ်းထားမယ်
+     */
+
+    try {
+
+        sessionStorage.setItem(
+            "ruby_age_verified",
+            "true"
+        );
+
+        sessionStorage.setItem(
+            "ruby_terms_accepted",
+            "true"
+        );
+
+    } catch (e) {
+
+        console.log(
+            "Storage unavailable"
+        );
+
+    }
+}
+
+
+/* =================================
+   TERMS MODAL
+================================= */
+
+function showTermsModal() {
+
+    const termsGate =
+        document.getElementById("terms-gate");
+
+    termsGate.classList.remove("hidden");
+}
+
+
+/* =================================
+   PAGE SWITCH
+================================= */
+
+function switchPage(pageName) {
+
+    const pages =
+        document.querySelectorAll(".page");
+
+    const navItems =
+        document.querySelectorAll(".nav-item");
+
+
+    /*
+     * Page အားလုံးဖျောက်
+     */
+
+    pages.forEach(function(page) {
+
+        page.classList.remove("active");
+
+    });
+
+
+    /*
+     * သွားချင်တဲ့ page ရှာ
+     */
+
+    const target =
+        document.getElementById(
+            "page-" + pageName
+        );
+
+
+    if (!target) {
+
+        console.error(
+            "Page not found:",
+            pageName
+        );
+
+        return;
+    }
+
+
+    /*
+     * Page ပြ
+     */
+
+    target.classList.add("active");
+
+
+    /*
+     * Bottom nav active state
+     */
+
+    navItems.forEach(function(item) {
+
+        item.classList.remove("active");
+
+        if (
+            item.dataset.page === pageName
+        ) {
+
+            item.classList.add("active");
+
+        }
+
+    });
+
+
+    /*
+     * Content ကိုအပေါ်ဆုံးပြန်ထား
+     */
+
+    const container =
+        document.querySelector(
+            ".content-container"
+        );
+
+    if (container) {
+        container.scrollTop = 0;
+    }
+
+}
+
+
+/* =================================
+   CHARACTER
+================================= */
+
+function openCharacter(characterName) {
+
+    /*
+     * နောက်ပိုင်းမှာ ဒီနေရာက
+     * Telegram Bot / AI API ကို ချိတ်နိုင်တယ်
+     */
+
+    alert(
+        characterName +
+        " chat is ready to connect."
+    );
+
+}
+
+
+/* =================================
+   PAYMENT
+================================= */
+
+function payment(method, amount) {
+
+    alert(
+        method +
+        " payment selected: " +
+        amount +
+        " MMK"
+    );
+
+}
+
+
+/* =================================
+   MESSAGE
+================================= */
+
+function showMessage(message) {
+
+    alert(message);
+
+}
+
+
+/* =================================
+   PAGE LOAD
+================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function() {
+
+        /*
+         * အစမှာ Age Gate ကို အမြဲပြ
+         * (Testing အတွက်)
+         */
+
+        const ageGate =
+            document.getElementById("age-gate");
+
+        const termsGate =
+            document.getElementById("terms-gate");
+
+
+        if (ageGate) {
+            ageGate.classList.remove("hidden");
+        }
+
+        if (termsGate) {
+            termsGate.classList.add("hidden");
+        }
+
+
+        /*
+         * Telegram Mini App မှာ
+         * click/touch event ကို မတားဆီးစေဖို့
+         */
+
+        document.addEventListener(
+            "touchstart",
+            function() {},
+            { passive: true }
+        );
+
+    }
+);
+
+</script>
+```
