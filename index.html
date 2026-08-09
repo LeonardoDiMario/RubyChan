@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ruby Chan - 18+ AI Roleplay</title>
-    <!-- Telegram WebApp SDK (To close the App) -->
+    <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background: #121212; color: #ffffff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* Overlays */
+        /* Overlays (Age Gate & Terms of Use) */
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 10, 10, 0.98); display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 20px; text-align: center; }
         .popup-box { background: #1a1a1a; padding: 35px 25px; border-radius: 15px; border: 2px solid #ff4757; max-width: 420px; box-shadow: 0 0 25px rgba(255, 71, 87, 0.3); width: 100%; }
         .popup-box h2 { color: #ff4757; margin-bottom: 15px; font-size: 24px; }
@@ -26,11 +26,11 @@
         .btn-secondary { background: #2f3542; color: #a4b0be; }
         .btn-secondary:hover { background: #57606f; }
 
-        /* Header */
+        /* Main Header */
         header { background: #1e1e1e; padding: 15px; text-align: center; border-bottom: 1px solid #2f3542; }
         header h1 { color: #ff4757; font-size: 24px; letter-spacing: 1px; }
 
-        /* Content Container */
+        /* Content Area */
         .content-container { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 80px; }
         .page { display: none; }
         .page.active { display: block; animation: fadeIn 0.3s ease-in-out; }
@@ -50,18 +50,17 @@
         .card .avatar { width: 60px; height: 60px; background: #2f3542; border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
         .action-btn { width: 100%; padding: 8px; background: #ff4757; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
 
-        /* Payment UI Cards */
-        .pay-card { background: #1e1e1e; border: 1px solid #2f3542; border-radius: 12px; padding: 20px; margin-bottom: 15px; border-left: 5px solid #ff4757; }
+        /* Upgrade Premium System Cards */
+        .pay-card { background: #1e1e1e; border: 1px solid #2f3542; border-radius: 12px; padding: 20px; margin-bottom: 15px; border-left: 5px solid #ff4757; text-align: left; }
         .pay-card h4 { font-size: 18px; color: #ff6b81; margin-bottom: 5px; }
         .pay-card .price { font-size: 22px; font-weight: bold; margin-bottom: 15px; color: #fff; }
         .pay-methods { display: flex; gap: 10px; }
         .method-btn { flex: 1; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-align: center; font-size: 12px; }
         .btn-kpay { background: #0066cc; color: white; }
         .btn-wave { background: #fbc531; color: #000; }
-        
         .badge { background: #2f3542; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; color: #ff4757; }
 
-        /* Navigation */
+        /* Bottom Nav */
         nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #1e1e1e; border-top: 1px solid #2f3542; display: flex; justify-content: space-around; padding: 10px 0; z-index: 100; }
         .nav-item { background: none; border: none; color: #a4b0be; font-size: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; }
         .nav-item.active { color: #ff4757; }
@@ -142,7 +141,7 @@
             </div>
         </div>
 
-        <!-- PAGE 3: UPGRADE PLAN (Wave & Kpay) -->
+        <!-- PAGE 3: UPGRADE PLAN -->
         <div id="page-upgrade" class="page">
             <h3 id="lang-up-title">Premium အစီအစဉ်များ</h3>
             <p style="font-size: 13px; color:#aaa; margin-bottom:15px;" id="lang-up-desc">VIP အဖွဲ့ဝင်ဝင်ပြီး စကားပြောကန့်သတ်ချက်မဲ့ ရယူပါ။</p>
