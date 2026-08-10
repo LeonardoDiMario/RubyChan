@@ -33,71 +33,75 @@ async function linkTelegramProfile(req: Request, body: any) {
   const characterId = String(body?.character_id || '').trim()
 
   console.log('Telegram link request:', { hasToken: !!token, tokenLength: token.length, chatId, characterId })
-
   if (!token) return Response.json({ ok: false, error: 'Missing authorization' }, { status: 401 })
   if (!chatId) return Response.json({ ok: false, error: 'Missing telegram_chat_id' }, { status: 400 })
 
-  // Verify the browser session using a normal Supabase client when the anon/publishable
-  // key is available. Fall back to the service-role client for projects that do not expose
-  // a separate anon secret to Edge Functions.
   const { data: authData, error: authError } = await authDb!.auth.getUser(token)
-  console.log('Telegram link auth result:', { userId: authData?.user?.id || null, authError: authError?.message || null })
-
-  if (authError || !authData?.user) {
-    console.error('Telegram link auth error:', authError)
-    return Response.json({ ok: false, error: 'Invalid session' }, { status: 401 })
-  }
+  if (authError || !authData?.user) return Response.json({ ok: false, error: 'Invalid session' }, { status: 401 })
 
   const userId = authData.user.id
-  const { data: profile, error: profileError } = await db
-    .from('profiles')
-    .select('id')
-    .eq('id', userId)
-    .maybeSingle()
-
-  console.log('Telegram link profile lookup:', { userId, profileId: profile?.id || null, profileError: profileError?.message || null })
-
-  if (profileError) {
-    console.error('Telegram profile lookup error:', profileError)
-    return Response.json({ ok: false, error: 'Profile lookup failed' }, { status: 500 })
-  }
+  const { data: profile, error: profileError } = await db.from('profiles').select('id').eq('id', userId).maybeSingle()
+  if (profileError) return Response.json({ ok: false, error: 'Profile lookup failed' }, { status: 500 })
   if (!profile) return Response.json({ ok: false, error: 'Profile not found', user_id: userId }, { status: 404 })
 
-  const { data: updatedRows, error: updateError } = await db
-    .from('profiles')
-    .update({ telegram_chat_id: chatId, updated_at: new Date().toISOString() })
-    .eq('id', userId)
-    .select('id,telegram_chat_id')
-
-  console.log('Telegram profile update result:', { updatedRows, updateError: updateError?.message || null })
-
-  if (updateError) {
-    console.error('Telegram profile update error:', updateError)
-    return Response.json({ ok: false, error: 'Profile update failed' }, { status: 500 })
-  }
+  const { data: updatedRows, error: updateError } = await db.from('profiles').update({ telegram_chat_id: chatId, updated_at: new Date().toISOString() }).eq('id', userId).select('id,telegram_chat_id')
+  if (updateError) return Response.json({ ok: false, error: 'Profile update failed' }, { status: 500 })
   if (!updatedRows?.length) return Response.json({ ok: false, error: 'Profile update affected 0 rows', user_id: userId }, { status: 500 })
 
   if (characterId) {
     const { data: character } = await db.from('characters').select('id').eq('id', characterId).maybeSingle()
     if (character?.id) {
-      const { error: sessionError } = await db
-        .from('telegram_sessions')
-        .upsert({ telegram_chat_id: chatId, character_id: character.id, updated_at: new Date().toISOString() }, { onConflict: 'telegram_chat_id' })
-      if (sessionError) {
-        console.error('Telegram character session update error:', sessionError)
-        return Response.json({ ok: false, error: 'Character session update failed' }, { status: 500 })
-      }
+      const { error: sessionError } = await db.from('telegram_sessions').upsert({ telegram_chat_id: chatId, character_id: character.id, updated_at: new Date().toISOString() }, { onConflict: 'telegram_chat_id' })
+      if (sessionError) return Response.json({ ok: false, error: 'Character session update failed' }, { status: 500 })
     }
   }
 
-  console.log('Telegram account linked:', { userId, chatId, characterId: characterId || null })
   return Response.json({ ok: true, user_id: userId, telegram_chat_id: chatId })
+}
+
+async function getSharedConversation(userId: string, characterName: string) {
+  if (!db || !userId || !characterName) return null
+  let { data, error } = await db.from('conversations')
+    .select('id,user_id,character_id,title,updated_at')
+    .eq('user_id', userId)
+    .eq('character_id', characterName)
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) throw error
+  if (data) return data
+
+  const created = await db.from('conversations').insert({
+    user_id: userId,
+    character_id: characterName,
+    title: `${characterName} Chat`,
+  }).select('id,user_id,character_id,title,updated_at').single()
+
+  if (created.error) throw created.error
+  return created.data
+}
+
+async function saveSharedMessage(conversationId: string, userId: string, role: 'user' | 'assistant', content: string) {
+  if (!db || !conversationId || !userId || !content) return
+  const { error } = await db.from('messages').insert({
+    conversation_id: conversationId,
+    user_id: userId,
+    role,
+    content,
+  })
+  if (error) throw error
+
+  await db.from('conversations').update({ updated_at: new Date().toISOString() })
+    .eq('id', conversationId)
+    .eq('user_id', userId)
 }
 
 Deno.serve(async (req) => {
   try {
     if (req.method !== 'POST') return new Response('OK')
     const update = await req.json()
+
     if (update?.action === 'link_telegram') return await linkTelegramProfile(req, update)
 
     const callback = update.callback_query
@@ -118,6 +122,8 @@ Deno.serve(async (req) => {
     }
 
     const text = String(incoming?.text ?? '').trim()
+    if (!text) return new Response('OK')
+
     if (text === '/start' || text.startsWith('/start ')) {
       const payload = text.substring(6).trim()
       const characterId = payload.startsWith('character_') ? payload.slice('character_'.length) : ''
@@ -125,7 +131,7 @@ Deno.serve(async (req) => {
         const { data: character } = await db.from('characters').select('id,name,ai_id').eq('id', characterId).maybeSingle()
         if (character?.id) {
           await db.from('telegram_sessions').upsert({ telegram_chat_id: String(chatId), character_id: character.id, updated_at: new Date().toISOString() }, { onConflict: 'telegram_chat_id' })
-          return Response.json(await send(chatId, `✨ <b>${character.name}</b>\n\nYour character is ready. 💜\n\nOpen Ruby Chan once to connect your account. After that, send your messages here on Telegram.`, buttons([[{ text: '💜 Connect Ruby Chan', web_app: { url: `${APP_URL}?telegram=1&telegram_chat_id=${encodeURIComponent(String(chatId))}&character_id=${encodeURIComponent(character.id)}` } }]])))
+          return Response.json(await send(chatId, `✨ <b>${character.name}</b>\n\nYour character is ready. 💜\n\nOpen Ruby Chan once to connect your account. After that, send your messages here on Telegram.`, buttons([[{ text: '💜 Connect Ruby Chan', web_app: { url: `${APP_URL}?telegram=1&telegram_chat_id=${encodeURIComponent(String(chatId))}&character_id=${encodeURIComponent(String(character.id))}` } }]])))
         }
       }
       return Response.json(await send(chatId, '🌸 <b>Welcome from Ruby Chan</b>\n\nMeet your AI companions and choose the one you want to chat with.', buttons([[{ text: '✨ Choose Characters', web_app: { url: `${APP_URL}?telegram=1&telegram_chat_id=${encodeURIComponent(String(chatId))}` } }]])))
@@ -136,22 +142,46 @@ Deno.serve(async (req) => {
 
     const { data: session } = await db.from('telegram_sessions').select('character_id').eq('telegram_chat_id', String(chatId)).maybeSingle()
     if (!session?.character_id) { await send(chatId, '✨ Choose a character first.', buttons([[{ text: '💜 Choose Characters', callback_data: 'choose' }]])); return new Response('OK') }
+
     const { data: character } = await db.from('characters').select('id,name,ai_id').eq('id', session.character_id).maybeSingle()
     if (!character?.ai_id) { await send(chatId, '⚠️ This character is not connected to an AI yet.'); return new Response('OK') }
+
     const { data: profile } = await db.from('profiles').select('id,energy').eq('telegram_chat_id', String(chatId)).maybeSingle()
-    if (!profile) { await send(chatId, '🔐 <b>Connect your Ruby Chan account first.</b>\n\nOpen Ruby Chan, login, and then come back here.', buttons([[{ text: '💜 Connect Ruby Chan', web_app: { url: `${APP_URL}?telegram=1&telegram_chat_id=${encodeURIComponent(String(chatId))}&character_id=${encodeURIComponent(String(character.id))}` } }]])); return new Response('OK') }
+    if (!profile) {
+      await send(chatId, '🔐 <b>Connect your Ruby Chan account first.</b>\n\nOpen Ruby Chan, login, and then come back here.', buttons([[{ text: '💜 Connect Ruby Chan', web_app: { url: `${APP_URL}?telegram=1&telegram_chat_id=${encodeURIComponent(String(chatId))}&character_id=${encodeURIComponent(String(character.id))}` } }]]))
+      return new Response('OK')
+    }
+
     const energy = Number(profile.energy ?? 0)
     if (energy <= 0) { await send(chatId, '⚡ <b>Your Energy is empty.</b>\n\nRecharge to continue chatting.', buttons([[{ text: '💎 Recharge Energy', web_app: { url: `${APP_URL}#recharge` } }]])); return new Response('OK') }
     if (!KINDROID_KEY) { await send(chatId, '⚠️ AI service is not configured.'); return new Response('OK') }
+
+    const conversation = await getSharedConversation(profile.id, character.name)
+    if (!conversation?.id) { await send(chatId, '⚠️ Could not open the shared conversation.'); return new Response('OK') }
+
     await telegram('sendChatAction', { chat_id: chatId, action: 'typing' })
-    const aiResponse = await fetch('https://api.kindroid.ai/v1/send-message', { method: 'POST', headers: { Authorization: `Bearer ${KINDROID_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ ai_id: character.ai_id, message: text, stream: false }) })
+    const aiResponse = await fetch('https://api.kindroid.ai/v1/send-message', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${KINDROID_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ai_id: character.ai_id, message: text, stream: false }),
+    })
+
     const raw = await aiResponse.text()
     if (!aiResponse.ok) { console.error('Kindroid error:', raw); await send(chatId, '⚠️ Ruby Chan could not reach the AI right now. Your Energy was not used.'); return new Response('OK') }
+
     let reply = raw
     try { const parsed = JSON.parse(raw); reply = parsed.reply ?? parsed.message ?? parsed.response ?? parsed.text ?? raw } catch (_) {}
+    reply = String(reply || '').trim()
+    if (!reply) { await send(chatId, '⚠️ The AI returned an empty response.'); return new Response('OK') }
+
+    // Save the Telegram side into the SAME conversations/messages rows used by Platform Chat.
+    await saveSharedMessage(conversation.id, profile.id, 'user', text)
+    await saveSharedMessage(conversation.id, profile.id, 'assistant', reply)
+
     const nextEnergy = Math.max(0, energy - 1)
     await db.from('profiles').update({ energy: nextEnergy, updated_at: new Date().toISOString() }).eq('id', profile.id)
-    await send(chatId, `<b>${character.name}</b>\n\n${String(reply).trim()}`)
+
+    await send(chatId, `<b>${character.name}</b>\n\n${reply}`)
     if (nextEnergy === 0) await send(chatId, '⚡ <b>You are out of Energy.</b>\n\nRecharge to continue chatting.', buttons([[{ text: '💎 Recharge Energy', web_app: { url: `${APP_URL}#recharge` } }]]))
     return new Response('OK')
   } catch (error) {
