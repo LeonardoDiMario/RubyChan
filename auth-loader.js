@@ -39,3 +39,9 @@ const dailyBonusFix = document.createElement('script');
 dailyBonusFix.src = './daily-bonus-fix.js';
 dailyBonusFix.defer = true;
 document.head.appendChild(dailyBonusFix);
+
+// Character picker: every character card starts a NEW conversation.
+const characterNewChat = document.createElement('script');
+characterNewChat.src = './character-new-chat.js';
+characterNewChat.defer = true;
+document.head.appendChild(characterNewChat);
