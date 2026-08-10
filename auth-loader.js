@@ -1,4 +1,9 @@
 // Ruby Chan client modules
+const telegramConfig = document.createElement('script');
+telegramConfig.src = './telegram-config.js';
+telegramConfig.defer = true;
+document.head.appendChild(telegramConfig);
+
 const authScript = document.createElement('script');
 authScript.src = './auth.js';
 authScript.defer = true;
