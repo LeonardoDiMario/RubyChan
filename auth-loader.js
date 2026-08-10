@@ -3,8 +3,7 @@
   'use strict';
   if (window.__rubyAuthLoaderStarted) return;
   window.__rubyAuthLoaderStarted = true;
-
-  const v = '20260811-3';
+  const v = '20260811-4';
   const scripts = [
     `./supabase.js?v=${v}`,
     `./telegram-config.js?v=${v}`,
@@ -14,31 +13,18 @@
     `./chat-client.js?v=${v}`,
     `./premium-ui.js?v=${v}`,
     `./telegram-bridge.js?v=${v}`,
-    `./daily-bonus-fix.js?v=${v}`,
+    `./daily-bonus-v2.js?v=${v}`,
     `./character-new-chat.js?v=${v}`
   ];
-
-  let index = 0;
+  let i = 0;
   function loadNext() {
-    if (index >= scripts.length) return;
-    const src = scripts[index++];
+    if (i >= scripts.length) return;
+    const src = scripts[i++];
     if (document.querySelector(`script[src="${src}"]`)) return loadNext();
-    const s = document.createElement('script');
-    s.src = src;
-    s.async = false;
-    s.onload = loadNext;
-    s.onerror = function () {
-      console.error('Ruby Chan: failed to load', src);
-      loadNext();
-    };
+    const s = document.createElement('script'); s.src = src; s.async = false;
+    s.onload = loadNext; s.onerror = () => { console.error('Ruby Chan: failed to load', src); loadNext(); };
     document.head.appendChild(s);
   }
-
-  function boot() {
-    if (!document.head) return;
-    loadNext();
-  }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
-  else boot();
+  function boot(){ if(document.head) loadNext(); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true}); else boot();
 })();
