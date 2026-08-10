@@ -12,13 +12,25 @@
   function ensureUI(){
     if(!document.body)return null;
     let gift=document.getElementById('rubyDailyGift');
+    if(gift && !gift.dataset.rubyServerBonus){
+      // chat-client.js creates the same button and attaches its old localStorage
+      // claim handler. Clone it to remove ALL old event listeners before taking over.
+      const replacement=gift.cloneNode(true);
+      replacement.dataset.rubyServerBonus='1';
+      gift.replaceWith(replacement);
+      gift=replacement;
+    }
     if(!gift){
       gift=document.createElement('button');
       gift.id='rubyDailyGift'; gift.type='button';
       gift.setAttribute('aria-label','Daily Bonus');
-      gift.style.cssText='position:fixed;right:18px;bottom:92px;width:72px;height:72px;z-index:99999;border:0;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a855f7);box-shadow:0 9px 26px rgba(124,58,237,.34),0 0 0 4px rgba(255,255,255,.86);color:#fff;font-size:28px;cursor:pointer;display:none;align-items:center;justify-content:center;flex-direction:column;gap:2px;padding:5px;';
-      gift.addEventListener('click',handleClick);
+      gift.dataset.rubyServerBonus='1';
       document.body.appendChild(gift);
+    }
+    gift.style.cssText='position:fixed;right:18px;bottom:92px;width:72px;height:72px;z-index:99999;border:0;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a855f7);box-shadow:0 9px 26px rgba(124,58,237,.34),0 0 0 4px rgba(255,255,255,.86);color:#fff;font-size:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;padding:5px;';
+    if(!gift.dataset.rubyServerClick){
+      gift.addEventListener('click',handleClick);
+      gift.dataset.rubyServerClick='1';
     }
     return gift;
   }
@@ -47,15 +59,12 @@
     return true;
   }
 
-  // If the server response is missing next_claim_at, calculate the next Myanmar midnight.
-  // This is display-only; the server still decides whether the account can actually claim.
   function calculateMyanmarNextMidnight(){
     const now=new Date();
     const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Rangoon',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now);
     const y=Number(parts.find(p=>p.type==='year').value);
     const m=Number(parts.find(p=>p.type==='month').value);
     const d=Number(parts.find(p=>p.type==='day').value);
-    // Myanmar is UTC+06:30. Next local midnight = previous UTC day at 17:30.
     return new Date(Date.UTC(y,m-1,d+1,0,0,0)-390*60000).toISOString();
   }
 
@@ -92,7 +101,6 @@
   function handleClick(event){
     if(event)event.preventDefault();
     if(!loggedIn||busy)return;
-    // Always respond to a real mouse click/tap. Claimed accounts NEVER call claim().
     if(!eligible){updateNotice();return;}
     claim();
   }
