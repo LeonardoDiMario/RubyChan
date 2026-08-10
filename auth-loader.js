@@ -1,7 +1,10 @@
-// Ruby Chan — load shared client first, then feature modules.
-// IMPORTANT: every module must reuse the same Supabase client.
+// Ruby Chan — single feature loader
 (function () {
-  const v = '20260810-2';
+  'use strict';
+  if (window.__rubyAuthLoaderStarted) return;
+  window.__rubyAuthLoaderStarted = true;
+
+  const v = '20260811-1';
   const scripts = [
     `./supabase.js?v=${v}`,
     `./telegram-config.js?v=${v}`,
@@ -15,24 +18,30 @@
     `./character-new-chat.js?v=${v}`
   ];
 
-  let i = 0;
+  let index = 0;
   function loadNext() {
-    if (i >= scripts.length) return;
-    const src = scripts[i++];
+    if (index >= scripts.length) return;
+    const src = scripts[index++];
+    if (document.querySelector(`script[src="${src}"]`)) return loadNext();
     const s = document.createElement('script');
     s.src = src;
-    s.defer = false;
+    s.async = false;
     s.onload = loadNext;
-    s.onerror = () => {
+    s.onerror = function () {
       console.error('Ruby Chan: failed to load', src);
       loadNext();
     };
     document.head.appendChild(s);
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadNext, { once: true });
-  } else {
+  function boot() {
+    if (!document.head) return;
     loadNext();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot, { once: true });
+  } else {
+    boot();
   }
 })();
