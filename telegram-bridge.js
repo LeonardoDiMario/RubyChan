@@ -1,4 +1,4 @@
-/* Ruby Chan — Telegram handoff */
+/* Ruby Chan — Telegram handoff + account linking */
 (function () {
   'use strict';
 
@@ -6,8 +6,12 @@
     window.RUBY_TELEGRAM_BOT_USERNAME || 'Rubby_Chan_Bot'
   ).replace(/^@/, '');
 
-  // IMPORTANT: this must match the actual Supabase Edge Function name.
-  // The Telegram function is named `telegram-bot`, not `bright-api`.
+  // IMPORTANT: Ruby Chan's actual Supabase client is window.rubySupabase.
+  // The previous code looked only for window.supabaseClient/window.supabase,
+  // so getSession() returned null and Telegram account linking never happened.
+  const getClient = () =>
+    window.rubySupabase || window.supabaseClient || null;
+
   const TELEGRAM_FUNCTION =
     'https://hcbajvladlvhklelbxdr.supabase.co/functions/v1/telegram-bot';
 
@@ -38,9 +42,10 @@
 
   async function getSession() {
     try {
-      const client = window.supabaseClient || window.supabase;
+      const client = getClient();
       if (!client?.auth?.getSession) return null;
-      const { data } = await client.auth.getSession();
+      const { data, error } = await client.auth.getSession();
+      if (error) console.warn('Ruby Telegram: getSession error', error);
       return data?.session || null;
     } catch (error) {
       console.warn('Ruby Telegram: session lookup failed', error);
@@ -71,11 +76,14 @@
 
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result?.ok) {
-        console.warn('Ruby Telegram: account link failed', result);
+        console.warn('Ruby Telegram: account link failed', response.status, result);
         return false;
       }
 
       localStorage.setItem('rubychan_telegram_linked', '1');
+      localStorage.setItem('rubychan_telegram_chat_id', chatId);
+      if (characterId) localStorage.setItem('rubychan_telegram_character_id', characterId);
+      console.info('Ruby Telegram: account linked successfully');
       return true;
     } catch (error) {
       console.warn('Ruby Telegram: account link request failed', error);
@@ -147,7 +155,7 @@
     if (id) return { id, name };
 
     try {
-      const client = window.supabaseClient || window.supabase;
+      const client = getClient();
       if (client?.from && name) {
         const { data, error } = await client
           .from('characters')
@@ -208,14 +216,17 @@
     ensureStyles();
     addButtons();
 
-    // Telegram opens the app with chat_id + character_id. Once Supabase
-    // restores the logged-in session, link the Telegram chat to that profile.
+    // Try immediately, then retry after Auth has restored the persisted session.
     syncTelegramAccount();
+    setTimeout(syncTelegramAccount, 500);
+    setTimeout(syncTelegramAccount, 1500);
+    setTimeout(syncTelegramAccount, 3000);
 
-    const client = window.supabaseClient || window.supabase;
+    const client = getClient();
     if (client?.auth?.onAuthStateChange) {
       client.auth.onAuthStateChange(() => {
-        setTimeout(syncTelegramAccount, 300);
+        setTimeout(syncTelegramAccount, 100);
+        setTimeout(syncTelegramAccount, 700);
       });
     }
 
