@@ -1,318 +1,54 @@
-/* Ruby Chan — Supabase Auth */
+/* Ruby Chan — Supabase Auth (shared client) */
 (function () {
-  const SUPABASE_URL = 'https://hcbajvladlvhklelbxdr.supabase.co';
-  const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_eKKXyB0rc7QUwTbbydi8Xw_t0n27eIj';
-
-  if (!window.supabase || typeof window.supabase.createClient !== 'function') return;
-
-  const client = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_PUBLISHABLE_KEY,
-    {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true
-      }
-    }
-  );
-
-  // Make the authenticated client available to chat-client.js.
+  const client = window.supabaseClient || window.rubySupabase;
+  if (!client) {
+    console.error('Ruby Chan Auth: shared Supabase client is unavailable.');
+    return;
+  }
+  // Keep one canonical reference for every other module.
   window.supabaseClient = client;
+  window.rubySupabase = client;
 
   const SAVED = 'rubychan_saved_accounts_v1';
   const readSaved = () => {
-    try {
-      return JSON.parse(localStorage.getItem(SAVED) || '[]');
-    } catch {
-      return [];
-    }
+    try { return JSON.parse(localStorage.getItem(SAVED) || '[]'); } catch { return []; }
   };
-
   const saveAccount = (u) => {
     if (!u?.email) return;
     const accounts = readSaved().filter((x) => x.email !== u.email);
-    accounts.unshift({
-      email: u.email,
-      name: u.user_metadata?.full_name || '',
-      username: u.user_metadata?.username || ''
-    });
-    localStorage.setItem(SAVED, JSON.stringify(accounts.slice(0, 8)));
+    accounts.unshift({email:u.email,name:u.user_metadata?.full_name||'',username:u.user_metadata?.username||''});
+    localStorage.setItem(SAVED, JSON.stringify(accounts.slice(0,8)));
   };
+  const esc = (value) => String(value ?? '').replace(/[&<>\'\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 
   function ensureAuthUI() {
     if (!document.body || document.getElementById('rubyAuthModal')) return;
-
     const style = document.createElement('style');
-    style.textContent = `
-      #rubyAuthButton{position:static;flex:0 0 auto;border:0;border-radius:12px;padding:9px 13px;background:#7c3aed;color:#fff;font-weight:700;cursor:pointer;white-space:nowrap;z-index:30;margin-left:10px}
-      #rubyAuthModal{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);padding:20px}
-      #rubyAuthModal.show{display:flex}
-      #rubyAuthBox{width:min(400px,100%);background:#fff;border-radius:22px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
-      #rubyAuthBox input{display:block;width:100%;box-sizing:border-box;margin:9px 0;padding:12px;border:1px solid #ddd;border-radius:10px}
-      #rubyAuthBox button{border:0;border-radius:10px;padding:11px 14px;cursor:pointer;font-weight:700}
-      #rubyAuthSubmit{width:100%;background:#7c3aed;color:#fff;margin-top:8px}
-      #rubyAuthSwitch,#rubySavedToggle{width:100%;margin-top:8px}
-      #rubyAuthClose{float:right;background:transparent;font-size:20px;padding:0}
-      #rubyAuthMessage{min-height:20px;margin-top:10px;font-size:13px;color:#666}
-      #rubyAccountCard{margin:0 0 14px;background:linear-gradient(135deg,#fff,#faf5ff);border:1px solid rgba(124,58,237,.16);border-radius:18px;padding:17px;box-shadow:0 7px 20px rgba(124,58,237,.08)}
-      #rubyAccountCard .ruby-account-name{font-size:18px;font-weight:800}
-      .ruby-account-meta{margin-top:5px;color:#8e8e93;font-size:12px;line-height:1.6}
-      .ruby-account-badge{display:inline-block;margin-top:10px;padding:5px 9px;border-radius:999px;background:#f3e8ff;color:#7c3aed;font-size:11px;font-weight:700}
-      #rubyAccountActions{display:flex;gap:8px;margin-top:14px}
-      #rubyAccountActions button{flex:1;padding:10px;border:0;border-radius:10px;font-weight:700;cursor:pointer}
-      .ruby-change{background:#f2f2f7;color:#1c1c1e}
-      .ruby-logout{background:#ff3b30;color:#fff}
-      #rubySettingsLogin{margin:0 0 18px;border-radius:22px;padding:22px;background:linear-gradient(135deg,rgba(124,58,237,.96),rgba(168,85,247,.88));color:#fff;box-shadow:0 12px 30px rgba(124,58,237,.22);border:1px solid rgba(255,255,255,.22)}
-      #rubySettingsLogin .ruby-premium-title{font-size:19px;font-weight:850;letter-spacing:-.2px}
-      #rubySettingsLogin .ruby-premium-sub{font-size:12px;line-height:1.5;margin:6px 0 16px;opacity:.86}
-      #rubySettingsLogin button{width:100%;padding:13px 16px;border:1px solid rgba(255,255,255,.55);border-radius:13px;background:rgba(255,255,255,.96);color:#6d28d9;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 5px 14px rgba(0,0,0,.12)}
-      #rubySavedAccounts{display:none;margin-top:10px;border-top:1px solid #eee;padding-top:10px}
-      .ruby-saved-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px;border-radius:10px;background:#f7f7f9;margin:6px 0}
-      .ruby-saved-row button{background:#fff}
-    `;
+    style.textContent = `#rubyAuthButton{position:static;flex:0 0 auto;border:0;border-radius:12px;padding:9px 13px;background:#7c3aed;color:#fff;font-weight:700;cursor:pointer;white-space:nowrap;z-index:30;margin-left:10px}#rubyAuthModal{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);padding:20px}#rubyAuthModal.show{display:flex}#rubyAuthBox{width:min(400px,100%);background:#fff;border-radius:22px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.25)}#rubyAuthBox input{display:block;width:100%;box-sizing:border-box;margin:9px 0;padding:12px;border:1px solid #ddd;border-radius:10px}#rubyAuthBox button{border:0;border-radius:10px;padding:11px 14px;cursor:pointer;font-weight:700}#rubyAuthSubmit{width:100%;background:#7c3aed;color:#fff;margin-top:8px}#rubyAuthSwitch,#rubySavedToggle{width:100%;margin-top:8px}#rubyAuthClose{float:right;background:transparent;font-size:20px;padding:0}#rubyAuthMessage{min-height:20px;margin-top:10px;font-size:13px;color:#666}#rubyAccountCard{margin:0 0 14px;background:linear-gradient(135deg,#fff,#faf5ff);border:1px solid rgba(124,58,237,.16);border-radius:18px;padding:17px;box-shadow:0 7px 20px rgba(124,58,237,.08)}#rubyAccountCard .ruby-account-name{font-size:18px;font-weight:800}.ruby-account-meta{margin-top:5px;color:#8e8e93;font-size:12px;line-height:1.6}.ruby-account-badge{display:inline-block;margin-top:10px;padding:5px 9px;border-radius:999px;background:#f3e8ff;color:#7c3aed;font-size:11px;font-weight:700}#rubyAccountActions{display:flex;gap:8px;margin-top:14px}#rubyAccountActions button{flex:1;padding:10px;border:0;border-radius:10px;font-weight:700;cursor:pointer}.ruby-change{background:#f2f2f7;color:#1c1c1e}.ruby-logout{background:#ff3b30;color:#fff}#rubySettingsLogin{margin:0 0 18px;border-radius:22px;padding:22px;background:linear-gradient(135deg,rgba(124,58,237,.96),rgba(168,85,247,.88));color:#fff;box-shadow:0 12px 30px rgba(124,58,237,.22);border:1px solid rgba(255,255,255,.22)}#rubySettingsLogin .ruby-premium-title{font-size:19px;font-weight:850}.ruby-premium-sub{font-size:12px;line-height:1.5;margin:6px 0 16px;opacity:.86}#rubySettingsLogin button{width:100%;padding:13px 16px;border:1px solid rgba(255,255,255,.55);border-radius:13px;background:rgba(255,255,255,.96);color:#6d28d9;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 5px 14px rgba(0,0,0,.12)}#rubySavedAccounts{display:none;margin-top:10px;border-top:1px solid #eee;padding-top:10px}.ruby-saved-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px;border-radius:10px;background:#f7f7f9;margin:6px 0}`;
     document.head.appendChild(style);
 
-    const button = document.createElement('button');
-    button.id = 'rubyAuthButton';
-    button.type = 'button';
-    button.textContent = 'Login';
+    const button=document.createElement('button'); button.id='rubyAuthButton'; button.type='button'; button.textContent='Login';
+    const balanceArea=document.querySelector('.balance-area'), header=document.querySelector('header');
+    if(balanceArea) balanceArea.appendChild(button); else if(header) header.appendChild(button); else document.body.appendChild(button);
 
-    const balanceArea = document.querySelector('.balance-area');
-    const header = document.querySelector('header');
-    if (balanceArea) balanceArea.appendChild(button);
-    else if (header) header.appendChild(button);
-    else document.body.appendChild(button);
-
-    const modal = document.createElement('div');
-    modal.id = 'rubyAuthModal';
-    modal.innerHTML = `
-      <div id="rubyAuthBox">
-        <button id="rubyAuthClose" type="button">×</button>
-        <h2 id="rubyAuthTitle">Login to Ruby Chan</h2>
-        <div id="rubySignupFields" style="display:none">
-          <input id="rubyAuthName" type="text" placeholder="Full name" autocomplete="name">
-          <input id="rubyAuthUsername" type="text" placeholder="Username" autocomplete="username">
-        </div>
-        <input id="rubyAuthEmail" type="email" placeholder="Email" autocomplete="email">
-        <input id="rubyAuthPassword" type="password" placeholder="Password" autocomplete="current-password">
-        <button id="rubyAuthSubmit" type="button">Login</button>
-        <button id="rubyAuthSwitch" type="button">Create account</button>
-        <button id="rubySavedToggle" type="button">Saved accounts</button>
-        <div id="rubySavedAccounts"></div>
-        <div id="rubyAuthMessage"></div>
-      </div>
-    `;
+    const modal=document.createElement('div'); modal.id='rubyAuthModal';
+    modal.innerHTML=`<div id="rubyAuthBox"><button id="rubyAuthClose" type="button">×</button><h2 id="rubyAuthTitle">Login to Ruby Chan</h2><div id="rubySignupFields" style="display:none"><input id="rubyAuthName" type="text" placeholder="Full name" autocomplete="name"><input id="rubyAuthUsername" type="text" placeholder="Username" autocomplete="username"></div><input id="rubyAuthEmail" type="email" placeholder="Email" autocomplete="email"><input id="rubyAuthPassword" type="password" placeholder="Password" autocomplete="current-password"><button id="rubyAuthSubmit" type="button">Login</button><button id="rubyAuthSwitch" type="button">Create account</button><button id="rubySavedToggle" type="button">Saved accounts</button><div id="rubySavedAccounts"></div><div id="rubyAuthMessage"></div></div>`;
     document.body.appendChild(modal);
 
-    let signup = false;
-    const title = document.getElementById('rubyAuthTitle');
-    const submit = document.getElementById('rubyAuthSubmit');
-    const switchBtn = document.getElementById('rubyAuthSwitch');
-    const message = document.getElementById('rubyAuthMessage');
-    const fields = document.getElementById('rubySignupFields');
-    const savedBox = document.getElementById('rubySavedAccounts');
-
-    function render() {
-      title.textContent = signup ? 'Create your Ruby Chan account' : 'Login to Ruby Chan';
-      submit.textContent = signup ? 'Sign Up' : 'Login';
-      switchBtn.textContent = signup ? 'Back to Login' : 'Create account';
-      fields.style.display = signup ? 'block' : 'none';
-      message.textContent = '';
-    }
-
-    function openAuth() {
-      render();
-      modal.classList.add('show');
-    }
-
-    document.getElementById('rubyAuthClose').onclick = () => modal.classList.remove('show');
-    switchBtn.onclick = () => {
-      signup = !signup;
-      render();
-    };
-
-    function esc(value) {
-      return String(value).replace(/[&<>\'\"]/g, (c) => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        "'": '&#39;',
-        '"': '&quot;'
-      }[c]));
-    }
-
-    function renderSaved() {
-      const list = readSaved();
-      savedBox.innerHTML = list.length
-        ? list.map((x, i) => `
-            <div class="ruby-saved-row">
-              <span>
-                <b>${esc(x.name || x.username || x.email)}</b>
-                <small style="display:block;color:#888">${esc(x.email)}</small>
-              </span>
-              <button type="button" data-i="${i}">Use</button>
-            </div>
-          `).join('')
-        : '<div style="font-size:12px;color:#888">No saved accounts yet.</div>';
-
-      savedBox.querySelectorAll('button[data-i]').forEach((b) => {
-        b.onclick = () => {
-          const account = readSaved()[Number(b.dataset.i)];
-          document.getElementById('rubyAuthEmail').value = account.email;
-          document.getElementById('rubyAuthPassword').focus();
-          savedBox.style.display = 'none';
-        };
-      });
-    }
-
-    document.getElementById('rubySavedToggle').onclick = () => {
-      renderSaved();
-      savedBox.style.display = savedBox.style.display === 'block' ? 'none' : 'block';
-    };
-
-    function accountCard(user) {
-      const old = document.getElementById('rubyAccountCard');
-      if (old) old.remove();
-      if (!user) return;
-
-      const card = document.createElement('div');
-      card.id = 'rubyAccountCard';
-      card.innerHTML = `
-        <div class="ruby-account-name">👤 ${esc(user.user_metadata?.full_name || 'Ruby Chan member')}</div>
-        <div class="ruby-account-meta">
-          ${esc(user.user_metadata?.username ? '@' + user.user_metadata.username : '')}
-          ${user.user_metadata?.username && user.email ? ' · ' : ''}
-          ${esc(user.email || '')}
-        </div>
-        <span class="ruby-account-badge">Signed in</span>
-        <div id="rubyAccountActions">
-          <button class="ruby-change" type="button">Change account</button>
-          <button class="ruby-logout" type="button">Logout</button>
-        </div>
-      `;
-
-      const settings = document.getElementById('page-settings');
-      if (settings) {
-        const section = settings.querySelector('.settings-section');
-        if (section) section.parentNode.insertBefore(card, section);
-        else settings.prepend(card);
-      }
-
-      card.querySelector('.ruby-change').onclick = async () => {
-        saveAccount(user);
-        await client.auth.signOut();
-        signup = false;
-        openAuth();
-      };
-
-      card.querySelector('.ruby-logout').onclick = async () => {
-        saveAccount(user);
-        await client.auth.signOut();
-      };
-    }
-
-    function addSettingsLogin(session) {
-      const settings = document.getElementById('page-settings');
-      if (!settings) return;
-
-      let box = document.getElementById('rubySettingsLogin');
-      if (session?.user) {
-        if (box) box.remove();
-        return;
-      }
-
-      if (box) return;
-
-      box = document.createElement('div');
-      box.id = 'rubySettingsLogin';
-      box.innerHTML = `
-        <div class="ruby-premium-title">✨ Your Ruby Chan Account</div>
-        <div class="ruby-premium-sub">Sign in to save your account, sync your session, and keep your Ruby Chan experience connected.</div>
-        <button type="button">Login / Sign Up</button>
-      `;
-      settings.prepend(box);
-      box.querySelector('button').onclick = openAuth;
-    }
-
-    submit.onclick = async () => {
-      const name = document.getElementById('rubyAuthName').value.trim();
-      const username = document.getElementById('rubyAuthUsername').value.trim();
-      const email = document.getElementById('rubyAuthEmail').value.trim();
-      const password = document.getElementById('rubyAuthPassword').value;
-
-      if (signup && (!name || !username)) {
-        message.textContent = 'Enter your name and username.';
-        return;
-      }
-      if (!email || !password) {
-        message.textContent = 'Enter your email and password.';
-        return;
-      }
-      if (signup && password.length < 6) {
-        message.textContent = 'Password must be at least 6 characters.';
-        return;
-      }
-
-      submit.disabled = true;
-      message.textContent = 'Please wait…';
-
-      try {
-        const result = signup
-          ? await client.auth.signUp({
-              email,
-              password,
-              options: { data: { full_name: name, username } }
-            })
-          : await client.auth.signInWithPassword({ email, password });
-
-        if (result.error) throw result.error;
-
-        if (result.data.session) {
-          saveAccount(result.data.user);
-          accountCard(result.data.user);
-          addSettingsLogin(result.data.session);
-          modal.classList.remove('show');
-        }
-      } catch (error) {
-        message.textContent = error?.message || 'Authentication failed.';
-      } finally {
-        submit.disabled = false;
-      }
-    };
-
-    button.onclick = openAuth;
-
-    client.auth.onAuthStateChange((_event, session) => {
-      addSettingsLogin(session);
-
-      if (session?.user) {
-        saveAccount(session.user);
-        button.textContent = 'Account';
-        button.onclick = () => {
-          if (typeof window.switchPage === 'function') window.switchPage('settings');
-          setTimeout(() => {
-            accountCard(session.user);
-            document.getElementById('rubyAccountCard')?.scrollIntoView({
-              behavior: 'smooth',
-              block: 'start'
-            });
-          }, 80);
-        };
-        accountCard(session.user);
-      } else {
-        button.textContent = 'Login';
-        button.onclick = openAuth;
-        document.getElementById('rubyAccountCard')?.remove();
-      }
-    });
-
+    let signup=false;
+    const title=document.getElementById('rubyAuthTitle'), submit=document.getElementById('rubyAuthSubmit'), switchBtn=document.getElementById('rubyAuthSwitch'), message=document.getElementById('rubyAuthMessage'), fields=document.getElementById('rubySignupFields'), savedBox=document.getElementById('rubySavedAccounts');
+    function render(){title.textContent=signup?'Create your Ruby Chan account':'Login to Ruby Chan';submit.textContent=signup?'Sign Up':'Login';switchBtn.textContent=signup?'Back to Login':'Create account';fields.style.display=signup?'block':'none';message.textContent='';}
+    function openAuth(){render();modal.classList.add('show');}
+    document.getElementById('rubyAuthClose').onclick=()=>modal.classList.remove('show');
+    switchBtn.onclick=()=>{signup=!signup;render();};
+    function renderSaved(){const list=readSaved();savedBox.innerHTML=list.length?list.map((x,i)=>`<div class="ruby-saved-row"><span><b>${esc(x.name||x.username||x.email)}</b><small style="display:block;color:#888">${esc(x.email)}</small></span><button type="button" data-i="${i}">Use</button></div>`).join(''):'<div style="font-size:12px;color:#888">No saved accounts yet.</div>';savedBox.querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>{const a=readSaved()[Number(b.dataset.i)];document.getElementById('rubyAuthEmail').value=a.email;document.getElementById('rubyAuthPassword').focus();savedBox.style.display='none';});}
+    document.getElementById('rubySavedToggle').onclick=()=>{renderSaved();savedBox.style.display=savedBox.style.display==='block'?'none':'block';};
+    function accountCard(user){document.getElementById('rubyAccountCard')?.remove();if(!user)return;const card=document.createElement('div');card.id='rubyAccountCard';card.innerHTML=`<div class="ruby-account-name">👤 ${esc(user.user_metadata?.full_name||'Ruby Chan member')}</div><div class="ruby-account-meta">${esc(user.user_metadata?.username?'@'+user.user_metadata.username:'')}${user.user_metadata?.username&&user.email?' · ':''}${esc(user.email||'')}</div><span class="ruby-account-badge">Signed in</span><div id="rubyAccountActions"><button class="ruby-change" type="button">Change account</button><button class="ruby-logout" type="button">Logout</button></div>`;const settings=document.getElementById('page-settings');if(settings){const section=settings.querySelector('.settings-section');if(section)section.parentNode.insertBefore(card,section);else settings.prepend(card);}card.querySelector('.ruby-change').onclick=async()=>{saveAccount(user);await client.auth.signOut();signup=false;openAuth();};card.querySelector('.ruby-logout').onclick=async()=>{saveAccount(user);await client.auth.signOut();};}
+    function addSettingsLogin(session){const settings=document.getElementById('page-settings');if(!settings)return;let box=document.getElementById('rubySettingsLogin');if(session?.user){box?.remove();return;}if(box)return;box=document.createElement('div');box.id='rubySettingsLogin';box.innerHTML='<div class="ruby-premium-title">✨ Your Ruby Chan Account</div><div class="ruby-premium-sub">Sign in to save your account, sync your session, and keep your Ruby Chan experience connected.</div><button type="button">Login / Sign Up</button>';settings.prepend(box);box.querySelector('button').onclick=openAuth;}
+    submit.onclick=async()=>{const name=document.getElementById('rubyAuthName').value.trim(),username=document.getElementById('rubyAuthUsername').value.trim(),email=document.getElementById('rubyAuthEmail').value.trim(),password=document.getElementById('rubyAuthPassword').value;if(signup&&(!name||!username)){message.textContent='Enter your name and username.';return;}if(!email||!password){message.textContent='Enter your email and password.';return;}if(signup&&password.length<6){message.textContent='Password must be at least 6 characters.';return;}submit.disabled=true;message.textContent='Please wait…';try{const result=signup?await client.auth.signUp({email,password,options:{data:{full_name:name,username}}}):await client.auth.signInWithPassword({email,password});if(result.error)throw result.error;if(result.data.session){saveAccount(result.data.user);accountCard(result.data.user);addSettingsLogin(result.data.session);modal.classList.remove('show');}}catch(error){message.textContent=error?.message||'Authentication failed.';}finally{submit.disabled=false;}};
+    button.onclick=openAuth;
+    client.auth.onAuthStateChange((_event,session)=>{addSettingsLogin(session);if(session?.user){saveAccount(session.user);button.textContent='Account';button.onclick=()=>{if(typeof window.switchPage==='function')window.switchPage('settings');setTimeout(()=>{accountCard(session.user);document.getElementById('rubyAccountCard')?.scrollIntoView({behavior:'smooth',block:'start'});},80);};accountCard(session.user);}else{button.textContent='Login';button.onclick=openAuth;document.getElementById('rubyAccountCard')?.remove();}});
     addSettingsLogin(null);
   }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', ensureAuthUI, { once: true });
-  } else {
-    ensureAuthUI();
-  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ensureAuthUI,{once:true});else ensureAuthUI();
 })();
