@@ -1,6 +1,5 @@
 /* Ruby Chan — Telegram handoff
  * App selects a character, Telegram becomes the actual chat surface.
- * The bridge is intentionally independent from the app's existing chat button.
  */
 (function () {
   'use strict';
@@ -9,45 +8,19 @@
     window.RUBY_TELEGRAM_BOT_USERNAME || 'Rubby_Chan_Bot'
   ).replace(/^@/, '');
 
+  const TELEGRAM_FUNCTION =
+    'https://hcbajvladlvhklelbxdr.supabase.co/functions/v1/bright-api';
+
   function ensureStyles() {
     if (document.getElementById('ruby-telegram-bridge-style')) return;
-
     const style = document.createElement('style');
     style.id = 'ruby-telegram-bridge-style';
     style.textContent = `
-      .ruby-telegram-btn{
-        width:100%;
-        margin-top:8px;
-        padding:11px 13px;
-        border:0;
-        border-radius:12px;
-        background:linear-gradient(135deg,#229ed9,#168acd);
-        color:#fff;
-        font-weight:800;
-        cursor:pointer;
-        box-shadow:0 8px 20px rgba(34,158,217,.22);
-      }
+      .ruby-telegram-btn{width:100%;margin-top:8px;padding:11px 13px;border:0;border-radius:12px;background:linear-gradient(135deg,#229ed9,#168acd);color:#fff;font-weight:800;cursor:pointer;box-shadow:0 8px 20px rgba(34,158,217,.22)}
       .ruby-telegram-btn:active{transform:scale(.98)}
-      .ruby-telegram-handoff{
-        position:fixed;
-        inset:0;
-        z-index:100000;
-        display:none;
-        align-items:center;
-        justify-content:center;
-        background:rgba(8,7,15,.55);
-        backdrop-filter:blur(12px);
-        padding:20px;
-      }
+      .ruby-telegram-handoff{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;background:rgba(8,7,15,.55);backdrop-filter:blur(12px);padding:20px}
       .ruby-telegram-handoff.show{display:flex}
-      .ruby-telegram-box{
-        width:min(390px,100%);
-        padding:25px;
-        border-radius:24px;
-        background:linear-gradient(160deg,#fff,#faf5ff);
-        box-shadow:0 24px 80px rgba(0,0,0,.28);
-        text-align:center;
-      }
+      .ruby-telegram-box{width:min(390px,100%);padding:25px;border-radius:24px;background:linear-gradient(160deg,#fff,#faf5ff);box-shadow:0 24px 80px rgba(0,0,0,.28);text-align:center}
       .ruby-telegram-icon{font-size:42px;margin-bottom:8px}
       .ruby-telegram-box h3{font-size:21px;margin-bottom:6px}
       .ruby-telegram-box p{font-size:13px;color:#777;line-height:1.55;margin-bottom:18px}
@@ -55,11 +28,66 @@
     document.head.appendChild(style);
   }
 
+  function getTelegramParams() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+      chatId: params.get('telegram_chat_id') || '',
+      characterId: params.get('character_id') || ''
+    };
+  }
+
+  async function getSession() {
+    try {
+      const client = window.supabaseClient || window.supabase;
+      if (!client?.auth?.getSession) return null;
+      const { data } = await client.auth.getSession();
+      return data?.session || null;
+    } catch (error) {
+      console.warn('Ruby Telegram: session lookup failed', error);
+      return null;
+    }
+  }
+
+  async function syncTelegramAccount() {
+    const { chatId, characterId } = getTelegramParams();
+    if (!chatId) return false;
+
+    const session = await getSession();
+    if (!session?.access_token) return false;
+
+    try {
+      const response = await fetch(TELEGRAM_FUNCTION, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          action: 'link_telegram',
+          telegram_chat_id: chatId,
+          character_id: characterId || null
+        })
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result?.ok) {
+        console.warn('Ruby Telegram: account link failed', result);
+        return false;
+      }
+
+      // Remember that this browser has completed the Telegram link.
+      localStorage.setItem('rubychan_telegram_linked', '1');
+      return true;
+    } catch (error) {
+      console.warn('Ruby Telegram: account link request failed', error);
+      return false;
+    }
+  }
+
   function handoff(character) {
     ensureStyles();
 
     let modal = document.getElementById('rubyTelegramHandoff');
-
     if (!modal) {
       modal = document.createElement('div');
       modal.id = 'rubyTelegramHandoff';
@@ -73,7 +101,6 @@
         </div>
       `;
       document.body.appendChild(modal);
-
       modal.addEventListener('click', e => {
         if (e.target === modal) modal.classList.remove('show');
       });
@@ -87,8 +114,7 @@
       return;
     }
 
-    const cleanId = String(id).replace(/[^a-zA-Z0-9_-]/g, '');
-    const payload = `character_${cleanId}`;
+    const payload = `character_${String(id).replace(/[^a-zA-Z0-9_-]/g, '')}`;
     const url = `https://t.me/${BOT_USERNAME}?start=${encodeURIComponent(payload)}`;
 
     modal.querySelector('#rubyTelegramText').textContent =
@@ -119,10 +145,8 @@
       card.querySelector('.character-name')?.textContent?.trim() ||
       '';
 
-    // Best case: the card already exposes the database ID.
     if (id) return { id, name };
 
-    // Fallback: resolve the card's displayed character name from Supabase.
     try {
       const client = window.supabaseClient || window.supabase;
       if (client?.from && name) {
@@ -131,7 +155,6 @@
           .select('id,name,ai_id')
           .eq('name', name)
           .maybeSingle();
-
         if (!error && data?.id) return data;
       }
     } catch (error) {
@@ -143,15 +166,11 @@
 
   async function addButtons() {
     ensureStyles();
-
     const cards = document.querySelectorAll('.character-card');
 
     for (const card of cards) {
       if (card.querySelector('.ruby-telegram-btn')) continue;
 
-      // Do NOT require .chat-btn. Some versions of Ruby Chan render
-      // character cards without that button, which previously prevented
-      // the Telegram button from appearing at all.
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'ruby-telegram-btn';
@@ -161,16 +180,13 @@
       btn.onclick = async event => {
         event.preventDefault();
         event.stopPropagation();
-
         btn.disabled = true;
         const oldText = btn.textContent;
         btn.textContent = 'Opening…';
 
         try {
           const character = await getCharacterForCard(card);
-
           if (!character?.id) {
-            console.error('Ruby Telegram: could not resolve character', card);
             btn.textContent = 'Character unavailable';
             setTimeout(() => {
               btn.textContent = oldText;
@@ -178,7 +194,6 @@
             }, 1600);
             return;
           }
-
           handoff(character);
         } finally {
           btn.disabled = false;
@@ -186,24 +201,29 @@
         }
       };
 
-      // Put the Telegram action at the bottom of every character card.
       card.appendChild(btn);
     }
   }
-
-  const observer = new MutationObserver(() => {
-    addButtons();
-  });
 
   function init() {
     ensureStyles();
     addButtons();
 
-    if (document.body) {
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true,
+    // If Telegram opened the app with chat_id + character_id, wait for
+    // Supabase Auth to finish restoring the user's session, then securely
+    // link that Telegram chat to the logged-in profile.
+    syncTelegramAccount();
+
+    const client = window.supabaseClient || window.supabase;
+    if (client?.auth?.onAuthStateChange) {
+      client.auth.onAuthStateChange(() => {
+        setTimeout(syncTelegramAccount, 100);
       });
+    }
+
+    if (document.body) {
+      const observer = new MutationObserver(() => addButtons());
+      observer.observe(document.body, { childList: true, subtree: true });
     }
   }
 
