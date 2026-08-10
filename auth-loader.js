@@ -1,47 +1,37 @@
-// Ruby Chan client modules
-const telegramConfig = document.createElement('script');
-telegramConfig.src = './telegram-config.js';
-telegramConfig.defer = true;
-document.head.appendChild(telegramConfig);
+// Ruby Chan — load shared client first, then feature modules.
+// IMPORTANT: every module must reuse the same Supabase client.
+(function () {
+  const scripts = [
+    './supabase.js',
+    './telegram-config.js',
+    './auth.js',
+    './welcome-auth.js',
+    './chat-sync.js',
+    './chat-client.js',
+    './premium-ui.js',
+    './telegram-bridge.js',
+    './daily-bonus-fix.js',
+    './character-new-chat.js'
+  ];
 
-const authScript = document.createElement('script');
-authScript.src = './auth.js';
-authScript.defer = true;
-document.head.appendChild(authScript);
+  let i = 0;
+  function loadNext() {
+    if (i >= scripts.length) return;
+    const src = scripts[i++];
+    const s = document.createElement('script');
+    s.src = src;
+    s.defer = false;
+    s.onload = loadNext;
+    s.onerror = () => {
+      console.error('Ruby Chan: failed to load', src);
+      loadNext();
+    };
+    document.head.appendChild(s);
+  }
 
-const welcomeAuth = document.createElement('script');
-welcomeAuth.src = './welcome-auth.js';
-welcomeAuth.defer = true;
-document.head.appendChild(welcomeAuth);
-
-const chatSync = document.createElement('script');
-chatSync.src = './chat-sync.js';
-chatSync.defer = true;
-document.head.appendChild(chatSync);
-
-const chatClient = document.createElement('script');
-chatClient.src = './chat-client.js';
-chatClient.defer = true;
-document.head.appendChild(chatClient);
-
-const premiumUI = document.createElement('script');
-premiumUI.src = './premium-ui.js';
-premiumUI.defer = true;
-document.head.appendChild(premiumUI);
-
-const telegramBridge = document.createElement('script');
-telegramBridge.src = './telegram-bridge.js';
-telegramBridge.defer = true;
-document.head.appendChild(telegramBridge);
-
-// Authenticated Daily Bonus + 24h MMT countdown
-const dailyBonusFix = document.createElement('script');
-dailyBonusFix.src = './daily-bonus-fix.js';
-dailyBonusFix.defer = true;
-document.head.appendChild(dailyBonusFix);
-
-// Character picker: every character card starts a NEW conversation.
-const characterNewChat = document.createElement('script');
-characterNewChat.src = './character-new-chat.js';
-characterNewChat.defer = true;
-document.head.appendChild(characterNewChat);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadNext, { once: true });
+  } else {
+    loadNext();
+  }
+})();
