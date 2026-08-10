@@ -2,243 +2,157 @@
 (function () {
   'use strict';
 
-  const BOT_USERNAME = String(
-    window.RUBY_TELEGRAM_BOT_USERNAME || 'Rubby_Chan_Bot'
-  ).replace(/^@/, '');
+  const BOT_USERNAME = String(window.RUBY_TELEGRAM_BOT_USERNAME || 'Rubby_Chan_Bot').replace(/^@/, '');
+  const TELEGRAM_FUNCTION = 'https://hcbajvladlvhklelbxdr.supabase.co/functions/v1/telegram-bot';
 
-  // IMPORTANT: Ruby Chan's actual Supabase client is window.rubySupabase.
-  // The previous code looked only for window.supabaseClient/window.supabase,
-  // so getSession() returned null and Telegram account linking never happened.
-  const getClient = () =>
-    window.rubySupabase || window.supabaseClient || null;
+  const getClient = () => window.supabaseClient || window.rubySupabase || null;
 
-  const TELEGRAM_FUNCTION =
-    'https://hcbajvladlvhklelbxdr.supabase.co/functions/v1/telegram-bot';
-
-  function ensureStyles() {
-    if (document.getElementById('ruby-telegram-bridge-style')) return;
-    const style = document.createElement('style');
-    style.id = 'ruby-telegram-bridge-style';
-    style.textContent = `
-      .ruby-telegram-btn{width:100%;margin-top:8px;padding:11px 13px;border:0;border-radius:12px;background:linear-gradient(135deg,#229ed9,#168acd);color:#fff;font-weight:800;cursor:pointer;box-shadow:0 8px 20px rgba(34,158,217,.22)}
-      .ruby-telegram-btn:active{transform:scale(.98)}
-      .ruby-telegram-handoff{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;background:rgba(8,7,15,.55);backdrop-filter:blur(12px);padding:20px}
-      .ruby-telegram-handoff.show{display:flex}
-      .ruby-telegram-box{width:min(390px,100%);padding:25px;border-radius:24px;background:linear-gradient(160deg,#fff,#faf5ff);box-shadow:0 24px 80px rgba(0,0,0,.28);text-align:center}
-      .ruby-telegram-icon{font-size:42px;margin-bottom:8px}
-      .ruby-telegram-box h3{font-size:21px;margin-bottom:6px}
-      .ruby-telegram-box p{font-size:13px;color:#777;line-height:1.55;margin-bottom:18px}
-    `;
-    document.head.appendChild(style);
-  }
-
-  function getTelegramParams() {
-    const params = new URLSearchParams(window.location.search);
-    return {
-      chatId: params.get('telegram_chat_id') || '',
-      characterId: params.get('character_id') || ''
-    };
-  }
-
-  async function getSession() {
+  function telegramWebApp() {
     try {
-      const client = getClient();
-      if (!client?.auth?.getSession) return null;
-      const { data, error } = await client.auth.getSession();
-      if (error) console.warn('Ruby Telegram: getSession error', error);
-      return data?.session || null;
-    } catch (error) {
-      console.warn('Ruby Telegram: session lookup failed', error);
+      return window.Telegram?.WebApp || null;
+    } catch {
       return null;
     }
   }
 
-  async function syncTelegramAccount() {
-    const { chatId, characterId } = getTelegramParams();
-    if (!chatId) return false;
+  function getTelegramContext() {
+    const params = new URLSearchParams(window.location.search);
+    const tg = telegramWebApp();
+    const tgUser = tg?.initDataUnsafe?.user;
+
+    return {
+      chatId: params.get('telegram_chat_id') || (tgUser?.id ? String(tgUser.id) : ''),
+      characterId: params.get('character_id') || '',
+      isTelegramWebApp: Boolean(tgUser?.id),
+    };
+  }
+
+  async function getSession() {
+    const client = getClient();
+    if (!client?.auth?.getSession) return null;
+    try {
+      const { data, error } = await client.auth.getSession();
+      if (error) console.warn('Telegram link: getSession', error);
+      return data?.session || null;
+    } catch (e) {
+      console.warn('Telegram link: session error', e);
+      return null;
+    }
+  }
+
+  async function linkTelegramAccount() {
+    const ctx = getTelegramContext();
+    if (!ctx.chatId) return false;
 
     const session = await getSession();
     if (!session?.access_token) return false;
 
     try {
-      const response = await fetch(TELEGRAM_FUNCTION, {
+      const r = await fetch(TELEGRAM_FUNCTION, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           action: 'link_telegram',
-          telegram_chat_id: chatId,
-          character_id: characterId || null
-        })
+          telegram_chat_id: ctx.chatId,
+          character_id: ctx.characterId || null,
+        }),
       });
 
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok || !result?.ok) {
-        console.warn('Ruby Telegram: account link failed', response.status, result);
-        return false;
-      }
+      const result = await r.json().catch(() => ({}));
+      console.log('Telegram account link:', r.status, result);
+
+      if (!r.ok || !result?.ok) return false;
 
       localStorage.setItem('rubychan_telegram_linked', '1');
-      localStorage.setItem('rubychan_telegram_chat_id', chatId);
-      if (characterId) localStorage.setItem('rubychan_telegram_character_id', characterId);
-      console.info('Ruby Telegram: account linked successfully');
+      localStorage.setItem('rubychan_telegram_chat_id', ctx.chatId);
+      if (ctx.characterId) localStorage.setItem('rubychan_telegram_character_id', ctx.characterId);
+
+      // When opened inside Telegram, tell Telegram to close the WebApp.
+      // Do NOT navigate back to /start — that was causing the apparent loop.
+      const tg = telegramWebApp();
+      if (tg?.ready) tg.ready();
+
       return true;
-    } catch (error) {
-      console.warn('Ruby Telegram: account link request failed', error);
+    } catch (e) {
+      console.warn('Telegram account link request failed:', e);
       return false;
     }
   }
 
-  function handoff(character) {
-    ensureStyles();
-
-    let modal = document.getElementById('rubyTelegramHandoff');
-    if (!modal) {
-      modal = document.createElement('div');
-      modal.id = 'rubyTelegramHandoff';
-      modal.className = 'ruby-telegram-handoff';
-      modal.innerHTML = `
-        <div class="ruby-telegram-box">
-          <div class="ruby-telegram-icon">✈️</div>
-          <h3>Continue on Telegram</h3>
-          <p id="rubyTelegramText">Opening your character in Telegram…</p>
-          <button id="rubyTelegramGo" class="ruby-telegram-btn" type="button">Open Telegram</button>
-        </div>
-      `;
-      document.body.appendChild(modal);
-      modal.addEventListener('click', e => {
-        if (e.target === modal) modal.classList.remove('show');
-      });
-    }
-
-    const id = character?.id || character?.ai_id || character?.character_id;
-    const name = character?.name || character?.character_name || 'your character';
-
-    if (!id) {
-      console.error('Ruby Telegram: character id is missing', character);
-      return;
-    }
-
+  function openTelegram(character) {
+    const id = character?.id || character?.character_id;
+    if (!id) return;
     const payload = `character_${String(id).replace(/[^a-zA-Z0-9_-]/g, '')}`;
     const url = `https://t.me/${BOT_USERNAME}?start=${encodeURIComponent(payload)}`;
-
-    modal.querySelector('#rubyTelegramText').textContent =
-      `${name} is ready. Continue the conversation in Telegram.`;
-
-    modal.querySelector('#rubyTelegramGo').onclick = () => {
-      window.location.href = url;
-    };
-
-    modal.classList.add('show');
+    window.location.href = url;
   }
 
-  window.rubyOpenTelegram = handoff;
-  window.rubyTelegramUrl = id =>
-    `https://t.me/${BOT_USERNAME}?start=${encodeURIComponent('character_' + id)}`;
-
-  async function getCharacterForCard(card) {
-    const id =
-      card.dataset.characterId ||
-      card.dataset.character ||
-      card.dataset.id ||
-      card.getAttribute('data-character-id');
-
-    const name =
-      card.dataset.characterName ||
-      card.getAttribute('data-character-name') ||
-      card.querySelector('h3')?.textContent?.trim() ||
-      card.querySelector('.character-name')?.textContent?.trim() ||
-      '';
-
+  async function characterFromCard(card) {
+    const id = card.dataset.characterId || card.dataset.character || card.dataset.id;
+    const name = card.dataset.characterName || card.getAttribute('data-character-name') || card.querySelector('h3')?.textContent?.trim() || '';
     if (id) return { id, name };
 
-    try {
-      const client = getClient();
-      if (client?.from && name) {
-        const { data, error } = await client
-          .from('characters')
-          .select('id,name,ai_id')
-          .eq('name', name)
-          .maybeSingle();
-        if (!error && data?.id) return data;
-      }
-    } catch (error) {
-      console.warn('Ruby Telegram: character lookup failed', error);
+    const client = getClient();
+    if (client?.from && name) {
+      const { data } = await client.from('characters').select('id,name,ai_id').eq('name', name).maybeSingle();
+      return data || null;
     }
-
     return null;
   }
 
   async function addButtons() {
-    ensureStyles();
     const cards = document.querySelectorAll('.character-card');
-
     for (const card of cards) {
       if (card.querySelector('.ruby-telegram-btn')) continue;
-
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'ruby-telegram-btn';
       btn.textContent = '✈️ Chat on Telegram';
-      btn.setAttribute('aria-label', 'Chat on Telegram');
-
-      btn.onclick = async event => {
-        event.preventDefault();
-        event.stopPropagation();
-        btn.disabled = true;
-        const oldText = btn.textContent;
-        btn.textContent = 'Opening…';
-
-        try {
-          const character = await getCharacterForCard(card);
-          if (!character?.id) {
-            btn.textContent = 'Character unavailable';
-            setTimeout(() => {
-              btn.textContent = oldText;
-              btn.disabled = false;
-            }, 1600);
-            return;
-          }
-          handoff(character);
-        } finally {
-          btn.disabled = false;
-          btn.textContent = oldText;
-        }
+      btn.onclick = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const character = await characterFromCard(card);
+        if (character?.id) openTelegram(character);
       };
-
       card.appendChild(btn);
     }
   }
 
   function init() {
-    ensureStyles();
+    // Telegram WebApp gives us the real Telegram user/chat id. This is more
+    // reliable than relying only on a URL query parameter.
+    const tg = telegramWebApp();
+    if (tg?.ready) tg.ready();
+    if (tg?.expand) tg.expand();
+
     addButtons();
 
-    // Try immediately, then retry after Auth has restored the persisted session.
-    syncTelegramAccount();
-    setTimeout(syncTelegramAccount, 500);
-    setTimeout(syncTelegramAccount, 1500);
-    setTimeout(syncTelegramAccount, 3000);
+    // Auth may restore the Supabase session asynchronously. Keep trying until
+    // the session exists, then link the current Telegram account exactly once.
+    let attempts = 0;
+    const tryLink = async () => {
+      attempts++;
+      const ok = await linkTelegramAccount();
+      if (!ok && attempts < 12) setTimeout(tryLink, 1000);
+    };
+    tryLink();
 
     const client = getClient();
     if (client?.auth?.onAuthStateChange) {
-      client.auth.onAuthStateChange(() => {
-        setTimeout(syncTelegramAccount, 100);
-        setTimeout(syncTelegramAccount, 700);
-      });
+      client.auth.onAuthStateChange(() => setTimeout(linkTelegramAccount, 150));
     }
 
     if (document.body) {
-      const observer = new MutationObserver(() => addButtons());
-      observer.observe(document.body, { childList: true, subtree: true });
+      new MutationObserver(addButtons).observe(document.body, { childList: true, subtree: true });
     }
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init, { once: true });
-  } else {
-    init();
-  }
+  window.rubyOpenTelegram = openTelegram;
+  window.rubyTelegramUrl = id => `https://t.me/${BOT_USERNAME}?start=${encodeURIComponent('character_' + id)}`;
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
+  else init();
 })();
