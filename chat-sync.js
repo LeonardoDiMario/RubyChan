@@ -21,6 +21,18 @@
     return r.data;
   }
 
+  // Always create a separate conversation when the user explicitly taps New Chat.
+  async function createNewConversation(character){
+    if(!currentUser||!character)return null;
+    const r=await db.from('conversations').insert({
+      user_id:currentUser.id,
+      character_id:character,
+      title:character+' Chat'
+    }).select().single();
+    if(r.error)throw r.error;
+    return r.data;
+  }
+
   async function addMessage(conversationId,role,content){
     if(!currentUser||!conversationId||!content)return false;
     const r=await db.from('messages').insert({conversation_id:conversationId,user_id:currentUser.id,role,content});
@@ -37,7 +49,44 @@
       .ruby-history-badges{display:flex;align-items:center;gap:5px;margin-top:4px}
       .ruby-history-badge{display:inline-flex;align-items:center;gap:3px;padding:3px 7px;border-radius:999px;background:#f3e8ff;color:#6d28d9;font-size:9px;font-weight:850;letter-spacing:.1px}
       .ruby-history-badge.tg{background:#ede9fe;color:#7c3aed}
+      .ruby-new-chat-btn{margin-left:auto;flex:0 0 auto;border:0;border-radius:12px;padding:8px 10px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-size:11px;font-weight:800;cursor:pointer;box-shadow:0 5px 14px rgba(124,58,237,.20)}
+      .ruby-new-chat-btn:active{transform:scale(.96)}
+      .ruby-new-chat-btn:disabled{opacity:.55;cursor:default}
     `;document.head.appendChild(s);
+  }
+
+  function ensureNewChatButton(){
+    ensureHistoryStyle();
+    const head=document.querySelector('#rubyKindroidChat .rk-head');
+    if(!head || head.querySelector('#rubyNewChatBtn'))return;
+    const btn=document.createElement('button');
+    btn.id='rubyNewChatBtn';
+    btn.type='button';
+    btn.className='ruby-new-chat-btn';
+    btn.textContent='＋ New';
+    btn.setAttribute('aria-label','Start a new chat with this character');
+    btn.addEventListener('click',startNewChat);
+    head.appendChild(btn);
+  }
+
+  async function startNewChat(){
+    if(!currentUser)return loginRequired();
+    const character=window.rubyCurrentCharacter;
+    if(!character)return;
+    const btn=document.getElementById('rubyNewChatBtn');
+    if(btn)btn.disabled=true;
+    try{
+      const c=await createNewConversation(character);
+      window.rubyCurrentConversation=c?.id||null;
+      window.rubyChatMessages=[];
+      await loadHistory();
+      window.dispatchEvent(new CustomEvent('rubychat:open',{detail:{character,conversation:c,messages:[]}}));
+    }catch(e){
+      console.error('New chat failed:',e);
+      alert('Could not start a new chat. Please try again.');
+    }finally{
+      if(btn)btn.disabled=false;
+    }
   }
 
   async function loadHistory(){
@@ -67,6 +116,7 @@
     const r=await db.from('messages').select('role,content,created_at').eq('conversation_id',c.id).order('created_at',{ascending:true});
     if(r.error){console.error('Conversation load failed:',r.error);return}
     window.rubyChatMessages=r.data||[];
+    ensureNewChatButton();
     window.dispatchEvent(new CustomEvent('rubychat:loaded',{detail:{character:c.character_id,conversation:c,messages:r.data||[]}}));
   }
 
@@ -90,9 +140,13 @@
       window.rubyCurrentConversation=c?.id||null;
       await loadHistory();
       switchPage('chat');
+      ensureNewChatButton();
       window.dispatchEvent(new CustomEvent('rubychat:open',{detail:{character,conversation:c}}));
     }catch(e){console.error('Start chat failed:',e);alert('Could not open this conversation. Please try again.')}
   };
+
+  window.addEventListener('rubychat:open',()=>setTimeout(ensureNewChatButton,0));
+  window.addEventListener('rubychat:loaded',()=>setTimeout(ensureNewChatButton,0));
 
   db.auth.onAuthStateChange((_e,s)=>{
     currentUser=s?.user||null;
