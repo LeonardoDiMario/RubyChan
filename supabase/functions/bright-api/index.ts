@@ -4,11 +4,11 @@ const BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN')
 const KINDROID_KEY = Deno.env.get('KINDROID_API_KEY')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')
 const APP_URL = 'https://leonardodimario.github.io/RubyChan/'
 
+// One service-role client is enough here. It is only used inside this Edge
+// Function; the service key is never sent to the browser.
 const db = SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null
-const authDb = ANON_KEY ? createClient(SUPABASE_URL, ANON_KEY) : null
 
 async function telegram(method: string, payload: Record<string, unknown>) {
   if (!BOT_TOKEN) throw new Error('TELEGRAM_BOT_TOKEN is not configured')
@@ -34,32 +34,74 @@ async function send(chatId: number, text: string, markup?: unknown) {
 }
 
 async function linkTelegramProfile(req: Request, body: any) {
-  if (!db || !authDb) return Response.json({ ok: false, error: 'Database auth is not configured' }, { status: 500 })
+  if (!db) return Response.json({ ok: false, error: 'SUPABASE_SERVICE_ROLE_KEY is not configured' }, { status: 500 })
+
   const token = (req.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '').trim()
   if (!token) return Response.json({ ok: false, error: 'Missing authorization' }, { status: 401 })
 
-  const { data: authData, error: authError } = await authDb.auth.getUser(token)
-  if (authError || !authData?.user) return Response.json({ ok: false, error: 'Invalid session' }, { status: 401 })
+  // Validate the user's real Supabase session server-side. This does not need
+  // SUPABASE_ANON_KEY, so a missing ANON_KEY can no longer break linking.
+  const { data: authData, error: authError } = await db.auth.getUser(token)
+  if (authError || !authData?.user) {
+    console.error('Telegram link auth error:', authError)
+    return Response.json({ ok: false, error: 'Invalid session' }, { status: 401 })
+  }
 
   const chatId = String(body?.telegram_chat_id || '').trim()
   const characterId = String(body?.character_id || '').trim()
   if (!chatId) return Response.json({ ok: false, error: 'Missing telegram_chat_id' }, { status: 400 })
 
-  const { data: profile, error: profileError } = await db.from('profiles').select('id').eq('id', authData.user.id).maybeSingle()
-  if (profileError) throw profileError
+  const userId = authData.user.id
+  const { data: profile, error: profileError } = await db
+    .from('profiles')
+    .select('id')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (profileError) {
+    console.error('Telegram profile lookup error:', profileError)
+    throw profileError
+  }
   if (!profile) return Response.json({ ok: false, error: 'Profile not found' }, { status: 404 })
 
-  const { error: updateError } = await db.from('profiles').update({ telegram_chat_id: chatId, updated_at: new Date().toISOString() }).eq('id', authData.user.id)
-  if (updateError) throw updateError
+  const { error: updateError } = await db
+    .from('profiles')
+    .update({
+      telegram_chat_id: chatId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', userId)
+
+  if (updateError) {
+    console.error('Telegram profile update error:', updateError)
+    throw updateError
+  }
 
   if (characterId) {
-    const { data: character } = await db.from('characters').select('id').eq('id', characterId).maybeSingle()
+    const { data: character } = await db
+      .from('characters')
+      .select('id')
+      .eq('id', characterId)
+      .maybeSingle()
+
     if (character?.id) {
-      await db.from('telegram_sessions').upsert({ telegram_chat_id: chatId, character_id: character.id, updated_at: new Date().toISOString() }, { onConflict: 'telegram_chat_id' })
+      const { error: sessionError } = await db
+        .from('telegram_sessions')
+        .upsert({
+          telegram_chat_id: chatId,
+          character_id: character.id,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'telegram_chat_id' })
+
+      if (sessionError) {
+        console.error('Telegram character session update error:', sessionError)
+        throw sessionError
+      }
     }
   }
 
-  return Response.json({ ok: true })
+  console.log('Telegram account linked:', { userId, chatId, characterId: characterId || null })
+  return Response.json({ ok: true, user_id: userId, telegram_chat_id: chatId })
 }
 
 Deno.serve(async (req) => {
@@ -67,7 +109,9 @@ Deno.serve(async (req) => {
     if (req.method !== 'POST') return new Response('OK')
     const update = await req.json()
 
-    if (update?.action === 'link_telegram') return await linkTelegramProfile(req, update)
+    if (update?.action === 'link_telegram') {
+      return await linkTelegramProfile(req, update)
+    }
 
     const callback = update.callback_query
     const incoming = update.message
@@ -76,17 +120,14 @@ Deno.serve(async (req) => {
 
     if (callback) {
       await telegram('answerCallbackQuery', { callback_query_id: callback.id })
-
       if (callback.data === 'choose') {
         return Response.json(await send(chatId, '✨ <b>Choose your Ruby Chan character</b>\n\nOpen the app and choose your AI companion.', buttons([[{ text: '💜 Choose Characters', web_app: { url: `${APP_URL}?telegram=1&telegram_chat_id=${encodeURIComponent(String(chatId))}` } }]])))
       }
-
       if (callback.data?.startsWith('character:')) {
         const characterId = callback.data.slice('character:'.length)
         if (db) await db.from('telegram_sessions').upsert({ telegram_chat_id: String(chatId), character_id: characterId, updated_at: new Date().toISOString() }, { onConflict: 'telegram_chat_id' })
         return Response.json(await send(chatId, '💜 <b>Character selected!</b>\n\nOpen Ruby Chan once to connect your account. Then you can chat here.', buttons([[{ text: '💜 Connect Ruby Chan', web_app: { url: `${APP_URL}?telegram=1&telegram_chat_id=${encodeURIComponent(String(chatId))}&character_id=${encodeURIComponent(characterId)}` } }]])))
       }
-
       if (callback.data === 'recharge') return Response.json(await send(chatId, '⚡ Your Energy is empty. Recharge in the Ruby Chan app.', buttons([[{ text: '💎 Recharge Energy', web_app: { url: `${APP_URL}#recharge` } }]])))
       return new Response('OK')
     }
@@ -96,7 +137,6 @@ Deno.serve(async (req) => {
     if (text === '/start' || text.startsWith('/start ')) {
       const payload = text.substring(6).trim()
       const characterId = payload.startsWith('character_') ? payload.slice('character_'.length) : ''
-
       if (characterId && db) {
         const { data: character } = await db.from('characters').select('id,name,ai_id').eq('id', characterId).maybeSingle()
         if (character?.id) {
@@ -104,7 +144,6 @@ Deno.serve(async (req) => {
           return Response.json(await send(chatId, `✨ <b>${character.name}</b>\n\nYour character is ready. 💜\n\nOpen Ruby Chan once to connect your account. After that, send your messages here on Telegram.`, buttons([[{ text: '💜 Connect Ruby Chan', web_app: { url: `${APP_URL}?telegram=1&telegram_chat_id=${encodeURIComponent(String(chatId))}&character_id=${encodeURIComponent(character.id)}` } }]])))
         }
       }
-
       return Response.json(await send(chatId, '🌸 <b>Welcome from Ruby Chan</b>\n\nMeet your AI companions and choose the one you want to chat with.', buttons([[{ text: '✨ Choose Characters', web_app: { url: `${APP_URL}?telegram=1&telegram_chat_id=${encodeURIComponent(String(chatId))}` } }]])))
     }
 
@@ -170,14 +209,10 @@ Deno.serve(async (req) => {
     const nextEnergy = Math.max(0, energy - 1)
     await db.from('profiles').update({ energy: nextEnergy, updated_at: new Date().toISOString() }).eq('id', profile.id)
     await send(chatId, `<b>${character.name}</b>\n\n${String(reply).trim()}`)
-
-    if (nextEnergy === 0) {
-      await send(chatId, '⚡ <b>You are out of Energy.</b>\n\nRecharge to continue chatting.', buttons([[{ text: '💎 Recharge Energy', web_app: { url: `${APP_URL}#recharge` } }]]))
-    }
-
+    if (nextEnergy === 0) await send(chatId, '⚡ <b>You are out of Energy.</b>\n\nRecharge to continue chatting.', buttons([[{ text: '💎 Recharge Energy', web_app: { url: `${APP_URL}#recharge` } }]]))
     return new Response('OK')
   } catch (error) {
     console.error('bright-api error:', error)
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }), { status: 200, headers: { 'Content-Type': 'application/json' } })
+    return new Response(JSON.stringify({ ok: false, error: error instanceof Error ? error.message : 'Unknown error' }), { status: 200, headers: { 'Content-Type': 'application/json' } })
   }
 })
