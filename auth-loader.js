@@ -4,7 +4,7 @@
   if (window.__rubyAuthLoaderStarted) return;
   window.__rubyAuthLoaderStarted = true;
 
-  const v = '20260811-1';
+  const v = '20260811-2';
   const scripts = [
     `./supabase.js?v=${v}`,
     `./telegram-config.js?v=${v}`,
@@ -39,9 +39,6 @@
     loadNext();
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot, { once: true });
-  } else {
-    boot();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
+  else boot();
 })();
