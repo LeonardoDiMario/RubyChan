@@ -9,6 +9,7 @@
   let eligible = false;
   let nextClaimAt = null;
   let busy = false;
+  let notice = null;
 
   function db() { return window.supabaseClient || window.rubySupabase || null; }
 
@@ -22,10 +23,22 @@
       gift.type = 'button';
       gift.setAttribute('aria-label', 'Daily Bonus');
       gift.style.cssText = 'position:fixed;right:18px;bottom:92px;width:72px;height:72px;z-index:99999;border:0;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a855f7);box-shadow:0 9px 26px rgba(124,58,237,.34),0 0 0 4px rgba(255,255,255,.86);color:#fff;font-size:28px;cursor:pointer;display:none;align-items:center;justify-content:center;flex-direction:column;gap:2px;padding:5px;';
-      gift.onclick = claim;
+      gift.onclick = handleClick;
       document.body.appendChild(gift);
     }
     return gift;
+  }
+
+  function ensureNotice() {
+    if (!document.body) return null;
+    let el = document.getElementById('rubyBonusNotice');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'rubyBonusNotice';
+      el.style.cssText = 'position:fixed;right:18px;bottom:174px;z-index:100000;display:none;max-width:270px;padding:13px 16px;border-radius:16px;background:rgba(31,20,50,.96);color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.22);font-size:13px;line-height:1.55;text-align:center;';
+      document.body.appendChild(el);
+    }
+    return el;
   }
 
   function fmt(ms) {
@@ -36,7 +49,7 @@
   function render() {
     const gift = ensureUI();
     if (!gift) return;
-    if (!loggedIn) { gift.style.display = 'none'; return; }
+    if (!loggedIn) { gift.style.display = 'none'; if (notice) notice.style.display = 'none'; return; }
     gift.style.display = 'flex';
     if (eligible) {
       gift.disabled = false;
@@ -45,13 +58,32 @@
       gift.innerHTML = `🎁<span style="font-size:9px;font-weight:900">+${BONUS}</span>`;
       gift.title = `Daily Bonus — claim +${BONUS}`;
     } else {
-      gift.disabled = true;
-      gift.style.pointerEvents = 'none';
-      gift.style.opacity = '.62';
+      gift.disabled = false;
+      gift.style.pointerEvents = 'auto';
+      gift.style.opacity = '.72';
       const remaining = nextClaimAt ? new Date(nextClaimAt).getTime() - Date.now() : 0;
-      gift.innerHTML = `🎁<span style="font-size:9px;font-weight:900">${remaining > 0 ? fmt(remaining) : 'Already claimed'}</span>`;
-      gift.title = remaining > 0 ? `Next Daily Bonus in ${fmt(remaining)}` : 'Daily Bonus already claimed';
+      gift.innerHTML = `🎁<span style="font-size:8px;font-weight:900">Already claimed</span>`;
+      gift.title = 'Already claimed — tap to see next claim time';
+      if (notice && notice.style.display === 'block') updateNotice(remaining);
     }
+  }
+
+  function updateNotice(remaining) {
+    const el = ensureNotice();
+    if (!el) return;
+    if (remaining <= 0) {
+      el.style.display = 'none';
+      return;
+    }
+    el.innerHTML = `<strong>🎁 Bonus already claimed</strong><br><span style="opacity:.9">နောက်တစ်ကြိမ် Bonus ယူရန်</span><br><strong style="font-size:20px;letter-spacing:1px">${fmt(remaining)}</strong><br><span style="font-size:11px;opacity:.78">အချိန်ပြည့်တဲ့အခါ ပြန်လာယူပါ</span>`;
+    el.style.display = 'block';
+  }
+
+  function handleClick() {
+    if (!loggedIn || busy) return;
+    if (eligible) return claim();
+    const remaining = nextClaimAt ? new Date(nextClaimAt).getTime() - Date.now() : 0;
+    updateNotice(remaining);
   }
 
   async function invoke(action) {
@@ -104,6 +136,7 @@
 
   function start() {
     ensureUI();
+    ensureNotice();
     const client = db();
     if (!client) { setTimeout(start, 500); return; }
     client.auth.onAuthStateChange(() => setTimeout(refresh, 100));
@@ -111,7 +144,10 @@
     setInterval(() => {
       if (!loggedIn) return render();
       if (nextClaimAt && Date.now() >= new Date(nextClaimAt).getTime()) { eligible = true; nextClaimAt = null; refresh(); }
-      else render();
+      else {
+        render();
+        if (notice && notice.style.display === 'block') updateNotice(new Date(nextClaimAt || Date.now()).getTime() - Date.now());
+      }
     }, 1000);
   }
 
