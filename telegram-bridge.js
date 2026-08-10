@@ -3,7 +3,7 @@
  * Set RUBY_TELEGRAM_BOT_USERNAME to the real Telegram bot username.
  */
 (function () {
-  const BOT_USERNAME = window.RUBY_TELEGRAM_BOT_USERNAME || '@Rubby_Chan_Bot';
+  const BOT_USERNAME = String(window.RUBY_TELEGRAM_BOT_USERNAME || 'Rubby_Chan_Bot').replace(/^@/, '');
   const APP_URL = window.location.origin + window.location.pathname;
 
   function ensureStyles() {
@@ -32,17 +32,24 @@
       document.body.appendChild(modal);
       modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('show'); });
     }
+
     const id = character?.id || character?.ai_id || character?.character_id;
     const name = character?.name || character?.character_name || 'your character';
-    const payload = id ? `ruby_${String(id).replace(/[^a-zA-Z0-9_-]/g, '')}` : 'ruby';
+
+    // IMPORTANT: telegram-bot expects /start character_<id>.
+    const payload = id
+      ? `character_${String(id).replace(/[^a-zA-Z0-9_-]/g, '')}`
+      : 'character';
+
     const url = `https://t.me/${BOT_USERNAME}?start=${encodeURIComponent(payload)}`;
+
     modal.querySelector('#rubyTelegramText').textContent = `${name} is ready. Continue the conversation in Telegram.`;
     modal.querySelector('#rubyTelegramGo').onclick = () => { window.location.href = url; };
     modal.classList.add('show');
   }
 
   window.rubyOpenTelegram = handoff;
-  window.rubyTelegramUrl = id => `https://t.me/${BOT_USERNAME}?start=${encodeURIComponent('ruby_' + id)}`;
+  window.rubyTelegramUrl = id => `https://t.me/${BOT_USERNAME}?start=${encodeURIComponent('character_' + id)}`;
 
   function addButtons() {
     const cards = document.querySelectorAll('.character-card');
@@ -50,8 +57,11 @@
       if (card.querySelector('.ruby-telegram-btn')) return;
       const chatButton = card.querySelector('.chat-btn');
       if (!chatButton) return;
+
       const id = card.dataset.characterId || card.dataset.character || card.dataset.id;
       const name = card.dataset.characterName || card.querySelector('h3')?.textContent?.trim();
+      if (!id) return;
+
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'ruby-telegram-btn';
@@ -59,8 +69,12 @@
       btn.onclick = async () => {
         let character = { id, name };
         try {
-          if (window.supabaseClient && id) {
-            const { data } = await window.supabaseClient.from('characters').select('id,name').eq('id', id).maybeSingle();
+          if (window.supabaseClient) {
+            const { data } = await window.supabaseClient
+              .from('characters')
+              .select('id,name')
+              .eq('id', id)
+              .maybeSingle();
             if (data) character = data;
           }
         } catch (_) {}
@@ -71,11 +85,16 @@
   }
 
   const observer = new MutationObserver(addButtons);
+
   function init() {
     ensureStyles();
     addButtons();
     observer.observe(document.body, { childList: true, subtree: true });
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
-  else init();
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
 })();
