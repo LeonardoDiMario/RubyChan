@@ -95,10 +95,21 @@
     });
   }
 
-  const observer = new MutationObserver(install);
+  // Re-run safely when other modules add characters. Disconnect while installing
+  // so our own DOM changes cannot recursively trigger the observer forever.
+  const observer = new MutationObserver(function () {
+    observer.disconnect();
+    try {
+      install();
+    } finally {
+      if (document.body) observer.observe(document.body, { childList: true, subtree: true });
+    }
+  });
+
   function boot() {
+    observer.disconnect();
     install();
-    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+    observer.observe(document.body, { childList: true, subtree: true });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
