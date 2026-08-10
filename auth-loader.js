@@ -33,3 +33,9 @@ const telegramBridge = document.createElement('script');
 telegramBridge.src = './telegram-bridge.js';
 telegramBridge.defer = true;
 document.head.appendChild(telegramBridge);
+
+// Authenticated Daily Bonus + 24h MMT countdown
+const dailyBonusFix = document.createElement('script');
+dailyBonusFix.src = './daily-bonus-fix.js';
+dailyBonusFix.defer = true;
+document.head.appendChild(dailyBonusFix);
