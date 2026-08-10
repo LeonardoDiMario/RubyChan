@@ -1,63 +1,97 @@
-/* Ruby Chan — Character picker New Chat buttons */
+/* Ruby Chan — Character picker: New + Chat buttons */
 (function () {
   'use strict';
 
-  const SUPABASE_URL = 'https://hcbajvladlvhklelbxdr.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_eKKXyB0rc7QUwTbbydi8Xw_t0n27eIj';
-  const db = window.supabaseClient || (window.supabase && window.supabase.createClient
-    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true } })
-    : null);
-
-  async function newConversation(character) {
-    if (!db || !character) return;
-    const { data: sessionData } = await db.auth.getSession();
-    const user = sessionData?.session?.user;
-    if (!user) {
-      document.getElementById('rubyAuthButton')?.click();
-      return;
-    }
-
-    const { data: characterRow, error: charError } = await db
-      .from('characters').select('id,name').eq('name', character).limit(1).maybeSingle();
-    if (charError || !characterRow?.id) {
-      if (typeof window.startChat === 'function') window.startChat(character);
-      return;
-    }
-
-    const { data: conversation, error } = await db.from('conversations')
-      .insert({ user_id: user.id, character_id: characterRow.id, title: character + ' Chat' })
-      .select().single();
-
-    if (error || !conversation) {
-      console.error('New conversation failed:', error);
-      return;
-    }
-
-    window.rubyCurrentConversation = conversation.id;
-    window.rubyCurrentCharacter = character;
-    if (typeof window.switchPage === 'function') window.switchPage('chat');
-    window.dispatchEvent(new CustomEvent('rubychat:open', {
-      detail: { character: character, conversation: conversation, messages: [] }
-    }));
-    if (typeof window.rubyLoadChatHistory === 'function') setTimeout(window.rubyLoadChatHistory, 50);
-  }
-
   function install() {
-    document.querySelectorAll('.character-card:not(.premium-card) .chat-btn').forEach(function (button) {
-      if (button.dataset.rubyNewInstalled === '1') return;
-      const card = button.closest('.character-card');
-      const name = card?.querySelector('h3')?.textContent?.trim();
+    document.querySelectorAll('.character-card:not(.premium-card)').forEach(function (card) {
+      const name = card.querySelector('h3')?.textContent?.trim();
       if (!name) return;
-      button.dataset.rubyNewInstalled = '1';
-      button.textContent = 'New';
-      button.onclick = function (event) {
-        event.preventDefault();
-        newConversation(name);
-      };
+
+      // Remove/hide the old Telegram action from character cards.
+      card.querySelectorAll('button,a').forEach(function (el) {
+        const text = (el.textContent || '').trim().toLowerCase();
+        const aria = (el.getAttribute('aria-label') || '').toLowerCase();
+        if (text.includes('telegram') || aria.includes('telegram')) {
+          el.remove();
+        }
+      });
+
+      let actions = card.querySelector('.ruby-character-actions');
+      if (!actions) {
+        actions = document.createElement('div');
+        actions.className = 'ruby-character-actions';
+        actions.style.cssText = 'display:flex;gap:8px;margin-top:8px;';
+
+        const originalChat = card.querySelector('.chat-btn');
+        if (originalChat) {
+          originalChat.classList.add('ruby-character-chat');
+          originalChat.textContent = 'Chat';
+          originalChat.removeAttribute('onclick');
+          originalChat.onclick = function (event) {
+            event.preventDefault();
+            if (typeof window.rubyShowCharacterHistory === 'function') {
+              window.rubyShowCharacterHistory(name);
+            } else if (typeof window.startChat === 'function') {
+              window.startChat(name);
+            }
+          };
+          actions.appendChild(originalChat);
+        } else {
+          const chat = document.createElement('button');
+          chat.type = 'button';
+          chat.className = 'chat-btn ruby-character-chat';
+          chat.textContent = 'Chat';
+          chat.onclick = function () {
+            if (typeof window.rubyShowCharacterHistory === 'function') window.rubyShowCharacterHistory(name);
+          };
+          actions.appendChild(chat);
+        }
+
+        const newBtn = document.createElement('button');
+        newBtn.type = 'button';
+        newBtn.className = 'chat-btn ruby-character-new';
+        newBtn.textContent = 'New';
+        newBtn.onclick = function (event) {
+          event.preventDefault();
+          if (typeof window.rubyStartNewCharacterChat === 'function') {
+            window.rubyStartNewCharacterChat(name);
+          } else if (typeof window.startChat === 'function') {
+            window.startChat(name);
+          }
+        };
+        actions.appendChild(newBtn);
+
+        const content = card.querySelector('.character-content') || card.querySelector('.card-content') || card;
+        content.appendChild(actions);
+      } else {
+        const chat = actions.querySelector('.ruby-character-chat');
+        const newBtn = actions.querySelector('.ruby-character-new');
+        if (chat) {
+          chat.textContent = 'Chat';
+          chat.onclick = function (event) {
+            event.preventDefault();
+            if (typeof window.rubyShowCharacterHistory === 'function') window.rubyShowCharacterHistory(name);
+          };
+        }
+        if (newBtn) {
+          newBtn.textContent = 'New';
+          newBtn.onclick = function (event) {
+            event.preventDefault();
+            if (typeof window.rubyStartNewCharacterChat === 'function') window.rubyStartNewCharacterChat(name);
+          };
+        }
+      }
     });
 
-    document.querySelectorAll('.premium-card .gem-buy-btn').forEach(function (button) {
-      if (/Unlocked.*Chat/i.test(button.textContent)) button.textContent = '✓ Unlocked — New';
+    // Premium cards: keep their purchase/unlock flow, but remove Telegram actions.
+    document.querySelectorAll('.premium-card').forEach(function (card) {
+      card.querySelectorAll('button,a').forEach(function (el) {
+        const text = (el.textContent || '').trim().toLowerCase();
+        if (text.includes('telegram')) el.remove();
+      });
+      card.querySelectorAll('.gem-buy-btn').forEach(function (button) {
+        if (/unlocked.*chat/i.test(button.textContent)) button.textContent = '✓ Unlocked — New';
+      });
     });
   }
 
