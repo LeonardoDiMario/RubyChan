@@ -102,52 +102,29 @@
     document.head.appendChild(style);
   }
 
+  /*
+   * Telegram and Platform are ONE conversation now.
+   * Do not clone history rows and do not create a second Telegram history item.
+   * chat-sync.js reads the shared conversations/messages tables and displays one
+   * character row with both Platform + Telegram badges.
+   */
   function buildUnifiedHistory() {
     addHistoryStyles();
     const list = document.querySelector('.chat-history-list');
-    if (!list || list.dataset.rubyUnifiedHistory === '1') return;
+    if (!list) return;
+    list.querySelectorAll('.ruby-telegram-history').forEach(el => el.remove());
 
-    const platformItems = Array.from(list.querySelectorAll('.chat-history-item')).filter(item => !item.classList.contains('ruby-telegram-history'));
-    if (!platformItems.length) return;
-
-    list.dataset.rubyUnifiedHistory = '1';
-
-    platformItems.forEach((item, index) => {
+    list.querySelectorAll('.chat-history-item').forEach(item => {
+      if (item.classList.contains('ruby-telegram-history')) return;
       const title = item.querySelector('.chat-history-name');
-      if (title && !title.querySelector('.ruby-history-source')) {
-        const source = document.createElement('span');
-        source.className = 'ruby-history-source';
-        source.textContent = 'Platform';
-        title.appendChild(source);
-      }
+      if (!title || title.querySelector('.ruby-history-source')) return;
+      const source = document.createElement('span');
+      source.className = 'ruby-history-source';
+      source.textContent = 'Platform + Telegram';
+      title.appendChild(source);
 
-      const telegramItem = item.cloneNode(true);
-      telegramItem.classList.add('ruby-telegram-history');
-      telegramItem.dataset.rubyTelegramHistory = '1';
-      telegramItem.removeAttribute('onclick');
-
-      const tgTitle = telegramItem.querySelector('.chat-history-name');
-      if (tgTitle) {
-        tgTitle.childNodes.forEach(node => { if (node.nodeType === Node.TEXT_NODE) node.textContent = node.textContent.trim(); });
-        const source = document.createElement('span');
-        source.className = 'ruby-history-source';
-        source.textContent = 'Telegram';
-        tgTitle.appendChild(source);
-      }
-
-      const preview = telegramItem.querySelector('.chat-history-preview');
-      if (preview) preview.textContent = 'Continue your Telegram conversation';
-
-      const time = telegramItem.querySelector('.chat-history-time');
-      if (time) time.textContent = '✈️';
-
-      telegramItem.addEventListener('click', e => {
-        e.preventDefault();
-        e.stopPropagation();
-        openTelegramHistory();
-      });
-
-      item.insertAdjacentElement('afterend', telegramItem);
+      const preview = item.querySelector('.chat-history-preview');
+      if (preview) preview.textContent = 'One shared conversation • chat anywhere';
     });
   }
 
