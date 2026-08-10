@@ -4,7 +4,7 @@
 
   const BOT_USERNAME = String(window.RUBY_TELEGRAM_BOT_USERNAME || 'Rubby_Chan_Bot').replace(/^@/, '');
   const TELEGRAM_LINK_FUNCTION = 'https://hcbajvladlvhklelbxdr.supabase.co/functions/v1/bright-api';
-  const getClient = () => window.supabaseClient || window.rubySupabase || null;
+  const getClient = () => window.rubySupabase || window.supabaseClient || null;
 
   function telegramWebApp() { try { return window.Telegram?.WebApp || null; } catch { return null; } }
 
@@ -33,7 +33,6 @@
     const session = await getSession();
     if (!client || !ctx.chatId || !session?.user?.id || !session?.access_token) return false;
 
-    // Primary server-side link.
     try {
       const r = await fetch(TELEGRAM_LINK_FUNCTION, {
         method: 'POST',
@@ -46,9 +45,6 @@
       console.warn('bright-api link failed; trying direct authenticated Supabase update');
     } catch (e) { console.warn('bright-api link failed:', e); }
 
-    // Fallback: the browser is already authenticated, so link the user's own
-    // profile directly. This works even if the Edge Function has stale deploy
-    // settings, while still remaining protected by the user's Supabase session/RLS.
     try {
       const { error: profileError } = await client.from('profiles').update({ telegram_chat_id: String(ctx.chatId), updated_at: new Date().toISOString() }).eq('id', session.user.id);
       if (profileError) { console.warn('Direct profile link failed:', profileError); return false; }
@@ -96,7 +92,7 @@
   function init() {
     telegramWebApp()?.ready?.(); telegramWebApp()?.expand?.(); addButtons();
     let attempts = 0;
-    const tryLink = async () => { attempts++; const ok = await linkTelegramAccount(); if (!ok && attempts < 12) setTimeout(tryLink, 1000); };
+    const tryLink = async () => { attempts++; const ok = await linkTelegramAccount(); if (!ok && attempts < 20) setTimeout(tryLink, 1000); };
     tryLink();
     const client = getClient();
     if (client?.auth?.onAuthStateChange) client.auth.onAuthStateChange(() => setTimeout(linkTelegramAccount, 150));
