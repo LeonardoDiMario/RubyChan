@@ -1,6 +1,4 @@
-/* Ruby Chan — Telegram handoff
- * App selects a character, Telegram becomes the actual chat surface.
- */
+/* Ruby Chan — Telegram handoff */
 (function () {
   'use strict';
 
@@ -8,8 +6,10 @@
     window.RUBY_TELEGRAM_BOT_USERNAME || 'Rubby_Chan_Bot'
   ).replace(/^@/, '');
 
+  // IMPORTANT: this must match the actual Supabase Edge Function name.
+  // The Telegram function is named `telegram-bot`, not `bright-api`.
   const TELEGRAM_FUNCTION =
-    'https://hcbajvladlvhklelbxdr.supabase.co/functions/v1/bright-api';
+    'https://hcbajvladlvhklelbxdr.supabase.co/functions/v1/telegram-bot';
 
   function ensureStyles() {
     if (document.getElementById('ruby-telegram-bridge-style')) return;
@@ -75,7 +75,6 @@
         return false;
       }
 
-      // Remember that this browser has completed the Telegram link.
       localStorage.setItem('rubychan_telegram_linked', '1');
       return true;
     } catch (error) {
@@ -209,15 +208,14 @@
     ensureStyles();
     addButtons();
 
-    // If Telegram opened the app with chat_id + character_id, wait for
-    // Supabase Auth to finish restoring the user's session, then securely
-    // link that Telegram chat to the logged-in profile.
+    // Telegram opens the app with chat_id + character_id. Once Supabase
+    // restores the logged-in session, link the Telegram chat to that profile.
     syncTelegramAccount();
 
     const client = window.supabaseClient || window.supabase;
     if (client?.auth?.onAuthStateChange) {
       client.auth.onAuthStateChange(() => {
-        setTimeout(syncTelegramAccount, 100);
+        setTimeout(syncTelegramAccount, 300);
       });
     }
 
