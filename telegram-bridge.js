@@ -3,7 +3,7 @@
  * Set RUBY_TELEGRAM_BOT_USERNAME to the real Telegram bot username.
  */
 (function () {
-  const BOT_USERNAME = window.RUBY_TELEGRAM_BOT_USERNAME || 'RubyChanBot';
+  const BOT_USERNAME = window.RUBY_TELEGRAM_BOT_USERNAME || '@Rubby_Chan_Bot';
   const APP_URL = window.location.origin + window.location.pathname;
 
   function ensureStyles() {
