@@ -1,17 +1,18 @@
 // Ruby Chan — load shared client first, then feature modules.
 // IMPORTANT: every module must reuse the same Supabase client.
 (function () {
+  const v = '20260810-2';
   const scripts = [
-    './supabase.js',
-    './telegram-config.js',
-    './auth.js',
-    './welcome-auth.js',
-    './chat-sync.js',
-    './chat-client.js',
-    './premium-ui.js',
-    './telegram-bridge.js',
-    './daily-bonus-fix.js',
-    './character-new-chat.js'
+    `./supabase.js?v=${v}`,
+    `./telegram-config.js?v=${v}`,
+    `./auth.js?v=${v}`,
+    `./welcome-auth.js?v=${v}`,
+    `./chat-sync.js?v=${v}`,
+    `./chat-client.js?v=${v}`,
+    `./premium-ui.js?v=${v}`,
+    `./telegram-bridge.js?v=${v}`,
+    `./daily-bonus-fix.js?v=${v}`,
+    `./character-new-chat.js?v=${v}`
   ];
 
   let i = 0;
