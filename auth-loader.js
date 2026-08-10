@@ -1,4 +1,4 @@
-// This file loads the Ruby Chan authentication and chat modules.
+// Ruby Chan client modules
 const authScript = document.createElement('script');
 authScript.src = './auth.js';
 authScript.defer = true;
@@ -23,3 +23,8 @@ const premiumUI = document.createElement('script');
 premiumUI.src = './premium-ui.js';
 premiumUI.defer = true;
 document.head.appendChild(premiumUI);
+
+const telegramBridge = document.createElement('script');
+telegramBridge.src = './telegram-bridge.js';
+telegramBridge.defer = true;
+document.head.appendChild(telegramBridge);
