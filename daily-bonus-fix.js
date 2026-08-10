@@ -1,19 +1,28 @@
-// Ruby Chan — account-based Daily Bonus controller
+// Ruby Chan — single account-based Daily Bonus controller
 (function () {
+  'use strict';
+
+  // Prevent this controller from being installed twice by cached/legacy loaders.
+  if (window.__rubyDailyBonusInstalled) return;
+  window.__rubyDailyBonusInstalled = true;
+
   const BONUS = 25;
   const DAY = 86400000;
   let nextClaimAt = null;
   let loggedIn = false;
   let authBound = false;
   let statusLoading = false;
+  let countdownTimer = null;
 
   function db() {
-    return window.supabaseClient || (window.supabase?.createClient
-      ? window.supabase.createClient(
-          'https://hcbajvladlvhklelbxdr.supabase.co',
-          'sb_publishable_eKKXyB0rc7QUwTbbydi8Xw_t0n27eIj',
-          { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }
-        ) : null);
+    return window.supabaseClient || null;
+  }
+
+  function removeLegacyGifts() {
+    // Old bonus implementations used these IDs. Remove them before creating the single current gift.
+    document.querySelectorAll('#rubyGiftFloat,#rubyGiftModal,#rubyDailyGift').forEach(function (el) {
+      if (el.dataset.rubyAccountBonusOwner !== '1') el.remove();
+    });
   }
 
   function styles() {
@@ -31,6 +40,7 @@
   }
 
   function ensureGift() {
+    removeLegacyGifts();
     styles();
     let gift = document.getElementById('rubyDailyGift');
     if (!gift || gift.dataset.rubyAccountBonusOwner !== '1') {
@@ -47,7 +57,6 @@
       gift = fresh;
     }
     gift.classList.add('ruby-daily-single');
-    gift.classList.remove('claimed');
     return gift;
   }
 
@@ -160,8 +169,8 @@
     ensureGift();
     bindAuth();
     setTimeout(refreshStatus, 0);
-    // Only update the visible countdown locally. No RPC/network polling.
-    setInterval(() => {
+    if (countdownTimer) clearInterval(countdownTimer);
+    countdownTimer = setInterval(() => {
       if (!loggedIn || !nextClaimAt) return;
       const timer = document.getElementById('rubyDailyCountdown');
       const remaining = new Date(nextClaimAt).getTime() - Date.now();
