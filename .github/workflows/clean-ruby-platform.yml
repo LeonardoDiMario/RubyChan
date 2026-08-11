@@ -23,6 +23,13 @@ jobs:
           path = Path('index.html')
           s = path.read_text(encoding='utf-8')
 
+          # Remove all generated cleanup blocks first so the workflow is idempotent.
+          s = re.sub(r'\s*<style id="boot-guard">.*?</style>\s*', '\n', s, flags=re.S)
+          s = re.sub(r'\s*/\* Final platform cleanup \*/.*?(?=</style>)', '\n', s, flags=re.S)
+          s = re.sub(r'\s*<div class="character-ability"><strong>Ability</strong><br>.*?</div>', '\n', s, flags=re.S)
+          s = re.sub(r'\s*<input id="characterSearch"[^>]*>', '\n', s)
+          s = re.sub(r'\s*function filterCharacters\(query\)\{.*?\n\}\s*', '\n', s, flags=re.S)
+
           # Keep exactly one clean Supabase bootstrap block in <head>.
           s = re.sub(r'\s*<script src="https://cdn\.jsdelivr\.net/npm/@supabase/supabase-js@2"></script>\s*', '\n', s)
           supabase_re = re.compile(
@@ -42,11 +49,11 @@ jobs:
           if n != 1:
               raise SystemExit('Home section not found')
 
-          # Remove local browser chat-history persistence. Telegram is the chat source of truth.
+          # Telegram is the chat source of truth; remove browser/local chat persistence.
           old_chat = re.compile(r'function addChatToHistory\(character\)\{.*?\n\}\n\nfunction renderChatHistory\(\)\{.*?\n\}\n\nfunction startChat\(character\)\{.*?\n\}', re.S)
           new_chat = '''function addChatToHistory(character){\n    return;\n}\n\nfunction renderChatHistory(){\n    const list = document.getElementById('chatHistoryList');\n    if(!list) return;\n    list.innerHTML = '<div class="chat-empty" id="chatEmpty">💬<br><span>Open a character to continue in Telegram.</span></div>';\n}\n\nfunction startChat(character){\n    const usernames = {\n        Sakura: 'Rubby_Chan_Bot',\n        Yuna: 'Rubby_Chan_Bot',\n        Rin: 'Rubby_Chan_Bot',\n        Akari: 'Rubby_Chan_Bot',\n        Hana: 'Rubby_Chan_Bot',\n        Reina: 'Rubby_Chan_Bot'\n    };\n    const username = usernames[character] || 'Rubby_Chan_Bot';\n    window.location.href = 'https://t.me/' + username;\n}'''
           s, n = old_chat.subn(new_chat, s, count=1)
-          if n != 1:
+          if n == 0 and 'function startChat(character)' not in s:
               raise SystemExit('Chat functions not found')
 
           css = '''\n/* Final platform cleanup */\n.character-search{width:100%;margin:10px 0 14px;padding:12px 14px;border:1px solid rgba(124,58,237,.18);border-radius:14px;background:#fff;font-size:15px;outline:none;}\n.character-search:focus{border-color:#7c3aed;box-shadow:0 0 0 3px rgba(124,58,237,.10);}\n.character-card{position:relative;}\n.character-ability{display:none;margin:8px 0 10px;padding:8px 10px;border-radius:10px;background:#f5efff;color:#6d28d9;font-size:11px;line-height:1.4;text-align:left;}\n.character-card:hover .character-ability,.character-card:focus-within .character-ability{display:block;}\n'''
@@ -77,6 +84,8 @@ jobs:
           search_js = '''\nfunction filterCharacters(query){\n    const q = (query || '').trim().toLowerCase();\n    document.querySelectorAll('#page-characters .character-card').forEach(card => {\n        const text = card.textContent.toLowerCase();\n        card.style.display = !q || text.includes(q) ? '' : 'none';\n    });\n}\n\n'''
           s = s.replace('/* =====================================================\n   START\n===================================================== */', search_js + '/* =====================================================\n   START\n===================================================== */', 1)
 
+          # Reveal only after the initial DOM setup has completed.
+          s = re.sub(r'\s*document\.documentElement\.classList\.add\("app-ready"\);', '', s)
           s = s.replace('        renderChatHistory();\n\n    }', '        renderChatHistory();\n        document.documentElement.classList.add("app-ready");\n\n    }', 1)
 
           path.write_text(s, encoding='utf-8')
@@ -92,5 +101,3 @@ jobs:
             git commit -m "Clean old platform markup and prevent UI flash"
             git push
           fi
-
-# trigger-cleanup
