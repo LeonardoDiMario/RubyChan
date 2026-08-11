@@ -2,46 +2,88 @@
 (function(){
   'use strict';
 
+  const PREMIUM_WORDS = /premium\s*(characters?|items?)/i;
+
   function hidePremiumSections(){
     const page=document.getElementById('page-characters');
     if(!page)return;
-    page.querySelectorAll('*').forEach(el=>{
+
+    // Hide the heading and the complete containing section/card group.
+    page.querySelectorAll('h1,h2,h3,h4,h5,h6,[role="heading"],p,span,div,section').forEach(el=>{
       const text=(el.textContent||'').trim().replace(/\s+/g,' ');
-      if(text==='👑 Premium Characters 👑' || text==='Premium Characters' || text==='👑 Premium Items 👑' || text==='Premium Items'){
-        el.style.display='none';
-        const parent=el.parentElement;
-        if(parent && parent.children.length<=4) parent.style.display='none';
+      if(!PREMIUM_WORDS.test(text))return;
+      const headingMatch=/premium\s*(characters?|items?)/i.test(text) && text.length<80;
+      if(!headingMatch)return;
+
+      let target=el;
+      // Prefer the nearest section/group that contains the premium heading.
+      for(let i=0;i<4 && target.parentElement;i++){
+        const p=target.parentElement;
+        const pText=(p.textContent||'').trim().replace(/\s+/g,' ');
+        if(pText.length<500 && (p.tagName==='SECTION'||p.children.length>=2)) target=p;
+        if(pText.length>500)break;
       }
+      target.style.setProperty('display','none','important');
+      target.setAttribute('data-ruby-premium-hidden','1');
     });
+
+    // Also remove individual cards whose visible text marks them as premium.
+    page.querySelectorAll('[class*="premium"],[id*="premium"]').forEach(el=>{
+      el.style.setProperty('display','none','important');
+      el.setAttribute('data-ruby-premium-hidden','1');
+    });
+  }
+
+  function welcomeName(session){
+    const user=session?.user;
+    if(!user)return '';
+    const m=user.user_metadata||{};
+    return String(m.full_name||m.name||m.username||user.email?.split('@')[0]||'Mario').trim();
   }
 
   function restoreWelcome(){
     const sb=window.supabaseClient||window.rubySupabase;
-    const title=document.querySelector('#page-home .hero h2, .hero h2');
-    if(!sb?.auth || !title)return;
-    sb.auth.getSession().then(({data})=>paint(data?.session));
-    sb.auth.onAuthStateChange((_event,session)=>setTimeout(()=>paint(session),0));
+    if(!sb?.auth)return;
 
-    function paint(session){
-      if(!session?.user)return;
-      const u=session.user.user_metadata||{};
-      const name=u.full_name||u.name||u.username||session.user.email?.split('@')[0]||'Mario';
-      title.textContent=`Welcome, ${name}`;
-      title.dataset.rubyWelcome='1';
-    }
+    const paint=async(session)=>{
+      const title=document.querySelector('#page-home .hero h2, #page-home h2.hero-title, #page-home .hero [data-ruby-welcome], .hero h2');
+      if(!title)return;
+
+      if(session?.user){
+        const name=welcomeName(session);
+        title.textContent=`Welcome, ${name}`;
+        title.dataset.rubyWelcome='1';
+      }else{
+        // Logged-out state should keep the login welcome copy.
+        title.textContent='Welcome to Ruby Chan';
+        title.dataset.rubyWelcome='0';
+      }
+    };
+
+    sb.auth.getSession().then(({data})=>paint(data?.session));
+    sb.auth.onAuthStateChange((_event,session)=>setTimeout(()=>paint(session),20));
+
+    // platform-ui-v5 can repaint the hero later, so enforce the canonical
+    // welcome title for a short startup window.
+    let ticks=0;
+    const guard=setInterval(async()=>{
+      ticks++;
+      const {data}=await sb.auth.getSession();
+      await paint(data?.session);
+      if(ticks>=40)clearInterval(guard);
+    },250);
   }
 
   function premiumBottomNav(){
     let best=null;
     document.querySelectorAll('nav, .bottom-nav, .bottom-navigation, .tab-bar, [class*="bottom-nav"], [class*="tab-bar"]').forEach(el=>{
-      const cs=getComputedStyle(el), r=el.getBoundingClientRect();
-      if((cs.position==='fixed'||cs.position==='sticky') && r.bottom>=innerHeight-8 && r.height>=45 && r.height<=120) best=el;
+      const cs=getComputedStyle(el),r=el.getBoundingClientRect();
+      if((cs.position==='fixed'||cs.position==='sticky')&&r.bottom>=innerHeight-8&&r.height>=45&&r.height<=120)best=el;
     });
     if(!best)return;
     best.classList.add('ruby-premium-nav');
     if(document.getElementById('ruby-premium-nav-style'))return;
-    const s=document.createElement('style');
-    s.id='ruby-premium-nav-style';
+    const s=document.createElement('style');s.id='ruby-premium-nav-style';
     s.textContent=`
       .ruby-premium-nav{height:78px!important;padding:8px 10px calc(8px + env(safe-area-inset-bottom))!important;display:flex!important;align-items:center!important;justify-content:space-around!important;gap:6px!important;background:rgba(255,255,255,.88)!important;backdrop-filter:blur(24px) saturate(150%)!important;-webkit-backdrop-filter:blur(24px) saturate(150%)!important;border-top:1px solid rgba(124,58,237,.16)!important;box-shadow:0 -10px 35px rgba(72,35,130,.12)!important;z-index:9990!important}
       .ruby-premium-nav>*{min-width:0;flex:1;max-width:92px;height:58px!important;border-radius:18px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;color:#8b8198!important;background:transparent!important;border:0!important;transition:.18s ease!important}
@@ -63,7 +105,7 @@
       premiumBottomNav();
     });
     observer.observe(document.body,{childList:true,subtree:true});
-    setTimeout(()=>observer.disconnect(),30000);
+    setTimeout(()=>observer.disconnect(),60000);
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
