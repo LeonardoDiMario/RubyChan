@@ -38,8 +38,10 @@
   `;
   document.head.appendChild(style);
 
-  function getImage(card) {
-    return card.querySelector('.avatar-img')?.src || '';
+  function getImage(card) { return card.querySelector('.avatar-img')?.src || ''; }
+  function telegram(name) {
+    const bot = String(window.RUBY_TELEGRAM_BOT_USERNAME || 'Rubby_Chan_Bot').replace(/^@/, '');
+    window.location.href = `https://t.me/${bot}?start=${encodeURIComponent('character_' + name)}`;
   }
 
   function openDetail(card) {
@@ -47,6 +49,7 @@
     const grid = page?.querySelector('.characters-grid');
     const search = page?.querySelector('.character-search,.ruby-platform-search');
     const subtitle = page?.querySelector('.section-subtitle');
+    const title = page?.querySelector('.section-title');
     const detail = page?.querySelector('.ruby-character-detail');
     if (!page || !grid || !detail) return;
 
@@ -58,6 +61,7 @@
     grid.querySelectorAll('.character-card').forEach(c => c.classList.add('ruby-detail-hidden'));
     if (search) search.style.display = 'none';
     if (subtitle) subtitle.style.display = 'none';
+    if (title) title.style.display = 'none';
     detail.innerHTML = `
       <button type="button" class="ruby-character-back" aria-label="Back">‹</button>
       <div class="ruby-character-detail-card">
@@ -68,26 +72,21 @@
         <button type="button" class="ruby-character-detail-chat">Chat</button>
       </div>`;
     detail.classList.add('open');
-
     detail.querySelector('.ruby-character-back').onclick = function () {
       detail.classList.remove('open');
       detail.innerHTML = '';
       grid.querySelectorAll('.character-card').forEach(c => c.classList.remove('ruby-detail-hidden'));
       if (search) search.style.display = '';
       if (subtitle) subtitle.style.display = '';
+      if (title) title.style.display = '';
     };
-
-    detail.querySelector('.ruby-character-detail-chat').onclick = function () {
-      if (typeof window.rubyShowCharacterHistory === 'function') window.rubyShowCharacterHistory(name);
-      else if (typeof window.startChat === 'function') window.startChat(name);
-    };
+    detail.querySelector('.ruby-character-detail-chat').onclick = function () { telegram(name); };
   }
 
   function clean() {
     const page = document.getElementById('page-characters');
     const grid = page?.querySelector('.characters-grid');
     if (!page || !grid) return;
-
     let detail = page.querySelector('.ruby-character-detail');
     if (!detail) {
       detail = document.createElement('div');
@@ -100,32 +99,16 @@
       if (!name) return;
       const p = card.querySelector('p');
       const tags = p?.textContent?.trim() || '';
-      const image = getImage(card);
       card.dataset.rubyCharacter = name;
       card.dataset.rubyTags = tags;
-      card.dataset.rubyImage = image;
-
-      // Keep only name + the short personality line on the selection card.
+      card.dataset.rubyImage = getImage(card);
       card.querySelectorAll('.character-ability,.character-description,.ruby-personality,.ruby-character-actions,.ruby-character-ability,.chat-btn').forEach(el => el.remove());
-      if (!p) {
-        const line = document.createElement('p');
-        line.textContent = tags;
-        card.appendChild(line);
-      }
 
       if (!card.dataset.rubyDetailHooked) {
         card.dataset.rubyDetailHooked = '1';
         card.setAttribute('tabindex', '0');
-        card.onclick = function (event) {
-          if (event.target.closest('button,a,input')) return;
-          openDetail(card);
-        };
-        card.onkeydown = function (event) {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            openDetail(card);
-          }
-        };
+        card.onclick = e => { if (!e.target.closest('button,a,input')) openDetail(card); };
+        card.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(card); } };
       }
     });
   }
@@ -135,7 +118,6 @@
     const mo = new MutationObserver(() => requestAnimationFrame(clean));
     if (document.body) mo.observe(document.body, { childList: true, subtree: true });
   }
-
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
   else boot();
 })();
