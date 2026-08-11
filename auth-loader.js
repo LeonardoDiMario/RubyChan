@@ -5,7 +5,7 @@
   window.__rubyAuthLoaderStarted = true;
 
   // One clean UI path. Telegram is the chat source of truth.
-  const v = '20260811-12';
+  const v = '20260811-13';
   const scripts = [
     `./supabase.js?v=${v}`,
     `./telegram-config.js?v=${v}`,
@@ -18,7 +18,7 @@
     `./account-settings.js?v=${v}`,
     `./platform-ui-v3.js?v=${v}`,
     `./character-new-chat.js?v=${v}`,
-    `./quick-access.js?v=${v}`
+    `./character-detail-v1.js?v=${v}`
   ];
 
   let index = 0;
