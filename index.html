@@ -1574,12 +1574,14 @@ nav{
 
 
 
+
     <div class="characters-grid">
 
         <div class="character-card">
             <img class="avatar-img" src="https://i.pinimg.com/originals/bf/ef/23/bfef23375344609c048165a7e7ae150b.jpg" alt="Sakura">
             <h3>Sakura</h3>
             <p>Cheerful • Caring • Playful</p><div class="character-ability"><strong>Ability</strong><br>Warm conversation, playful replies, and gentle companionship.</div>
+
 
 
             <button class="chat-btn" onclick="startChat('Sakura')">Chat</button>
@@ -1591,6 +1593,7 @@ nav{
             <p>Calm • Mysterious • Gentle</p><div class="character-ability"><strong>Ability</strong><br>Calm conversation, thoughtful replies, and a mysterious tone.</div>
 
 
+
             <button class="chat-btn" onclick="startChat('Yuna')">Chat</button>
         </div>
 
@@ -1598,6 +1601,7 @@ nav{
             <img class="avatar-img" src="https://media.easy-peasy.ai/27feb2bb-aeb4-4a83-9fb6-8f3f2a15885e/59b1c9a8-392b-4d9a-84d0-f075091ffa1b.png" alt="Rin">
             <h3>Rin</h3>
             <p>Elegant • Quiet • Intelligent</p><div class="character-ability"><strong>Ability</strong><br>Quiet, intelligent conversation with composed responses.</div>
+
 
 
             <button class="chat-btn" onclick="startChat('Rin')">Chat</button>
@@ -1609,6 +1613,7 @@ nav{
             <p>Confident • Energetic • Bold</p><div class="character-ability"><strong>Ability</strong><br>Energetic conversation, confidence, and bold personality.</div>
 
 
+
             <button class="chat-btn" onclick="startChat('Akari')">Chat</button>
         </div>
 
@@ -1618,6 +1623,7 @@ nav{
             <p>Friendly • Romantic • Sweet</p><div class="character-ability"><strong>Ability</strong><br>Friendly, sweet, romantic-style conversation.</div>
 
 
+
             <button class="chat-btn" onclick="startChat('Hana')">Chat</button>
         </div>
 
@@ -1625,6 +1631,7 @@ nav{
             <img class="avatar-img" src="https://c-ssl.duitang.com/uploads/blog/202305/01/20230501125015_95235.jpg" alt="Reina">
             <h3>Reina</h3>
             <p>Cool • Intelligent • Composed</p><div class="character-ability"><strong>Ability</strong><br>Cool, intelligent, composed conversation.</div>
+
 
 
             <button class="chat-btn" onclick="startChat('Reina')">Chat</button>
@@ -1651,6 +1658,7 @@ nav{
                     <p>Elegant • Affectionate • Confident</p><div class="character-ability"><strong>Ability</strong><br>Elegant, affectionate, confident premium character.</div>
 
 
+
                     <button class="gem-buy-btn" onclick="buyPremiumCharacter('Ruby',300)">
                         💎 300 Gems
                     </button>
@@ -1665,6 +1673,7 @@ nav{
                     <span class="anime-tag">ANIME GIRL</span>
                     <h3>Velvet</h3>
                     <p>Mysterious • Teasing • Intelligent</p><div class="character-ability"><strong>Ability</strong><br>Mysterious, teasing, intelligent premium character.</div>
+
 
 
                     <button class="gem-buy-btn" onclick="buyPremiumCharacter('Velvet',500)">
@@ -1683,6 +1692,7 @@ nav{
                     <p>Sweet • Dreamy • Romantic</p><div class="character-ability"><strong>Ability</strong><br>Sweet, dreamy, romantic premium character.</div>
 
 
+
                     <button class="gem-buy-btn" onclick="buyPremiumCharacter('Celeste',800)">
                         💎 800 Gems
                     </button>
@@ -1697,6 +1707,7 @@ nav{
                     <span class="anime-tag">ANIME GIRL</span>
                     <h3>Seraphine</h3>
                     <p>Royal • Calm • Possessive</p><div class="character-ability"><strong>Ability</strong><br>Royal, calm, possessive premium character.</div>
+
 
 
                     <button class="gem-buy-btn" onclick="buyPremiumCharacter('Seraphine',1000)">
@@ -3871,7 +3882,6 @@ function updateBalance(){
     ).textContent = gems;
 
 }
-
 
 function filterCharacters(query){
     const q = (query || '').trim().toLowerCase();
