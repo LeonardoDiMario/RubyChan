@@ -1,0 +1,137 @@
+/* Ruby Chan — Platform UI v3: Telegram history + character search */
+(function(){
+  'use strict';
+  if(window.__rubyPlatformV3) return;
+  window.__rubyPlatformV3=true;
+
+  const db=()=>window.supabaseClient||window.rubySupabase||null;
+  const BOT=()=>String(window.RUBY_TELEGRAM_BOT_USERNAME||'Rubby_Chan_Bot').replace(/^@/,'');
+  const imageMap={
+    Sakura:'https://i.pinimg.com/originals/bf/ef/23/bfef23375344609c048165a7e7ae150b.jpg',
+    Yuna:'https://i.pinimg.com/564x/ab/4f/c7/ab4fc790bddb89dc9b006e1e4a9c3e2.jpg',
+    Rin:'https://media.easy-peasy.ai/27feb2bb-aeb4-4a83-9fb6-8f3f2a15885e/59b1c9a8-392b-4d9a-84d0-f075091ffa1b.png',
+    Akari:'https://i-blog.csdnimg.cn/blog_migrate/332cc1a83679e50899b6045e2bb3cece.png',
+    Hana:'https://c-ssl.duitang.com/uploads/blog/202306/14/Q2SDz364f8YX0jM.jpg',
+    Reina:'https://c-ssl.duitang.com/uploads/blog/202305/01/20230501125015_95235.jpg'
+  };
+  const abilities={
+    Sakura:'Warm companion • Gentle support • Natural conversation',
+    Yuna:'Playful energy • Friendly conversation • Emotional support',
+    Rin:'Calm listener • Smart conversation • Thoughtful replies',
+    Akari:'Confident personality • Creative ideas • Lively conversation',
+    Hana:'Kind companion • Caring support • Soft conversation',
+    Reina:'Elegant personality • Mature conversation • Calm support'
+  };
+  const esc=v=>String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
+
+  function styles(){
+    if(document.getElementById('ruby-platform-v3-style')) return;
+    const s=document.createElement('style'); s.id='ruby-platform-v3-style';
+    s.textContent=`
+      /* Remove the old Home quick-access shortcuts. Bottom navigation stays. */
+      .ruby-old-quick-access{display:none!important}
+      .ruby-platform-search{display:flex;align-items:center;gap:9px;margin:0 0 14px;padding:11px 13px;border:1px solid rgba(124,58,237,.14);border-radius:15px;background:rgba(255,255,255,.92);box-shadow:0 7px 22px rgba(72,35,130,.06)}
+      .ruby-platform-search span{font-size:17px;color:#7c3aed}
+      .ruby-platform-search input{width:100%;border:0;outline:0;background:transparent;font-size:14px;color:#241b35}
+      .ruby-platform-search input::placeholder{color:#aaa1b4}
+      .ruby-character-ability{display:none;position:absolute;left:9px;right:9px;bottom:9px;padding:10px;border-radius:12px;background:rgba(35,20,50,.93);color:#fff;font-size:11px;line-height:1.45;text-align:left;z-index:20;box-shadow:0 12px 28px rgba(0,0,0,.22)}
+      .character-card{position:relative;overflow:visible!important}
+      .character-card:hover .ruby-character-ability,.character-card:focus-within .ruby-character-ability{display:block}
+      .ruby-history-v3{position:relative;display:flex!important;align-items:center;gap:11px;width:100%;padding:12px;border-radius:17px;background:linear-gradient(135deg,#fff,#faf7ff);border:1px solid rgba(124,58,237,.13);box-shadow:0 7px 22px rgba(72,35,130,.055);cursor:pointer;text-align:left;margin-bottom:9px;overflow:hidden}
+      .ruby-history-v3:hover{border-color:rgba(124,58,237,.28);box-shadow:0 11px 28px rgba(72,35,130,.10);transform:translateY(-1px)}
+      .ruby-history-v3 img{width:58px;height:58px;border-radius:15px;object-fit:cover;object-position:center top;flex:0 0 58px}
+      .ruby-history-v3 .rh-info{min-width:0;flex:1}.ruby-history-v3 .rh-name{font-weight:800;color:#241b35;font-size:15px}.ruby-history-v3 .rh-text{margin-top:4px;color:#8e8796;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ruby-history-v3 .rh-action{margin-top:7px;display:inline-block;color:#6d28d9;font-size:11px;font-weight:800}.ruby-history-v3 .rh-arrow{font-size:20px;color:#a59cab;margin-left:auto}
+      .ruby-chat-page-note{padding:2px 4px 12px;color:#8e8796;font-size:12px;line-height:1.5}
+    `; document.head.appendChild(s);
+  }
+
+  function hideOldQuickAccess(){
+    document.querySelectorAll('.section-title').forEach(t=>{
+      if(/quick\s*access/i.test(t.textContent||'')){
+        t.classList.add('ruby-old-quick-access');
+        const card=t.nextElementSibling;
+        if(card) card.classList.add('ruby-old-quick-access');
+      }
+    });
+    document.querySelectorAll('.ios-card').forEach(card=>{
+      const txt=(card.textContent||'').trim();
+      if(/Characters[\s\S]*Recharge[\s\S]*Premium/.test(txt)) card.classList.add('ruby-old-quick-access');
+    });
+  }
+
+  function installChatNav(){
+    const nav=document.getElementById('nav-chat'); if(!nav)return;
+    nav.dataset.platformV3='1';
+    nav.onclick=function(e){e.preventDefault();e.stopPropagation();
+      if(typeof window.switchPage==='function') window.switchPage('chat');
+      setTimeout(renderTelegramHistory,0);
+    };
+  }
+
+  function telegram(name){
+    const url=`https://t.me/${BOT()}?start=${encodeURIComponent('character_'+String(name||''))}`;
+    window.location.href=url;
+  }
+
+  async function renderTelegramHistory(){
+    styles();
+    const list=document.getElementById('chatHistoryList'); if(!list)return;
+    const client=db();
+    if(!client){return;}
+    const session=(await client.auth.getSession()).data?.session;
+    if(!session?.user){list.innerHTML='<div class="chat-empty">💬<br><span>Log in to view your Telegram chat history.</span></div>';return;}
+    try{
+      const r=await client.from('conversations').select('id,character_id,title,updated_at,source').eq('user_id',session.user.id).eq('source','telegram').order('updated_at',{ascending:false}).limit(100);
+      if(r.error)throw r.error;
+      list.innerHTML='';
+      const rows=r.data||[];
+      if(!rows.length){list.innerHTML='<div class="chat-empty">💬<br><span>No Telegram conversations yet.</span></div>';return;}
+      const note=document.createElement('div');note.className='ruby-chat-page-note';note.textContent='Your conversations are stored here as history. Continue the conversation on Telegram.';list.appendChild(note);
+      rows.forEach(c=>{
+        const name=c.character_id||c.title||'Telegram Chat';
+        const row=document.createElement('button');row.type='button';row.className='ruby-history-v3';
+        row.innerHTML=`<img src="${imageMap[name]||imageMap.Sakura}" alt="${esc(name)}"><div class="rh-info"><div class="rh-name">${esc(name)}</div><div class="rh-text">${esc(c.title||'Telegram conversation')}</div><span class="rh-action">Continue Chat / Resume Chat</span></div><span class="rh-arrow">›</span>`;
+        row.onclick=()=>telegram(name);list.appendChild(row);
+      });
+    }catch(e){console.error('Ruby Telegram history v3:',e);list.innerHTML='<div class="chat-empty">⚠️<br><span>Could not load Telegram history.</span></div>';}
+  }
+
+  function installHistoryHeader(){
+    const list=document.getElementById('chatHistoryList'); if(!list)return;
+    const parent=list.parentElement; if(!parent)return;
+    if(!parent.querySelector('.ruby-history-v3-title')){
+      const h=document.createElement('div');h.className='ruby-history-v3-title section-title';h.textContent='Chat History';list.parentElement.insertBefore(h,list);
+    }
+  }
+
+  function installCharacterSearch(){
+    const page=document.getElementById('characters');
+    if(!page)return;
+    const grid=page.querySelector('.characters-grid'); if(!grid)return;
+    if(!page.querySelector('.ruby-platform-search')){
+      const box=document.createElement('div');box.className='ruby-platform-search';box.innerHTML='<span>⌕</span><input type="search" placeholder="Search characters..." autocomplete="off">';
+      const title=page.querySelector('.section-title');
+      if(title) title.parentNode.insertBefore(box,title.nextSibling); else page.insertBefore(box,grid);
+      box.querySelector('input').addEventListener('input',e=>filterCharacters(e.target.value));
+    }
+    grid.querySelectorAll('.character-card').forEach(card=>{
+      const name=card.querySelector('h3')?.textContent?.trim();if(!name)return;
+      if(!card.querySelector('.ruby-character-ability')){
+        const a=document.createElement('div');a.className='ruby-character-ability';a.innerHTML=`<strong>Ability</strong><br>${esc(abilities[name]||'Personality-based AI companion • Conversation • Support')}`;card.appendChild(a);
+        card.setAttribute('tabindex','0');
+      }
+    });
+  }
+  function filterCharacters(q){
+    const needle=String(q||'').trim().toLowerCase();
+    document.querySelectorAll('#characters .character-card').forEach(card=>{const name=(card.querySelector('h3')?.textContent||'').toLowerCase();card.style.display=!needle||name.includes(needle)?'':'none';});
+  }
+
+  function boot(){
+    styles();hideOldQuickAccess();installChatNav();installHistoryHeader();installCharacterSearch();
+    if(typeof window.rubyLoadChatHistory==='function') window.rubyLoadChatHistory=renderTelegramHistory;
+    renderTelegramHistory();
+    let timer=null;const mo=new MutationObserver(()=>{clearTimeout(timer);timer=setTimeout(()=>{hideOldQuickAccess();installChatNav();installHistoryHeader();installCharacterSearch();},40)});mo.observe(document.body,{childList:true,subtree:true});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+})();
