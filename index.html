@@ -1,58 +1,11 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#faf9ff">
-  <meta name="description" content="Ruby Chan V2 — AI companion platform">
-  <title>Ruby Chan V2</title>
-  <style>
-    :root{--bg:#f7f5fb;--surface:rgba(255,255,255,.78);--solid:#fff;--text:#18151d;--muted:#7d7587;--purple:#7c3aed;--purple2:#a855f7;--line:rgba(70,45,100,.10);--shadow:0 18px 55px rgba(54,32,88,.09);--radius:26px}
-    *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",Inter,system-ui,sans-serif;color:var(--text);background:var(--bg)}button{font:inherit;border:0;cursor:pointer}body{overflow-x:hidden}
-    .app{min-height:100vh;background:radial-gradient(circle at 80% -10%,rgba(192,132,252,.20),transparent 32%),linear-gradient(180deg,#fbfaff,#f6f3fa)}
-    .shell{width:min(1120px,100%);margin:auto;padding:18px 22px 120px}
-    .topbar{height:64px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
-    .brand{display:flex;align-items:center;gap:10px}.brand-mark{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,#7c3aed,#b56cff);color:#fff;font-size:19px;box-shadow:0 9px 25px rgba(124,58,237,.22)}.brand-name{font-size:20px;font-weight:800;letter-spacing:-.5px}.brand-version{font-size:10px;font-weight:800;color:var(--purple);padding:5px 8px;border-radius:999px;background:#f0e8ff}
-    .profile{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#eee8f6;border:1px solid var(--line);color:#6d28d9;font-weight:800}
-    .hero{position:relative;overflow:hidden;padding:34px;border-radius:32px;background:linear-gradient(135deg,rgba(239,231,255,.95),rgba(255,255,255,.94) 56%,rgba(248,239,255,.96));border:1px solid rgba(124,58,237,.12);box-shadow:var(--shadow)}.hero:before{content:"";position:absolute;width:240px;height:240px;border-radius:50%;right:-65px;top:-105px;background:radial-gradient(circle,rgba(168,85,247,.28),rgba(168,85,247,0) 68%)}.hero-content{position:relative;z-index:1;max-width:650px}.eyebrow{font-size:11px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;color:var(--purple);margin-bottom:10px}.hero h1{font-size:clamp(32px,5vw,54px);line-height:1.02;letter-spacing:-2px;margin:0 0 14px}.hero p{margin:0;color:#71697b;font-size:15px;line-height:1.6;max-width:560px}.hero-actions{display:flex;gap:10px;margin-top:24px;flex-wrap:wrap}.primary{padding:13px 19px;border-radius:15px;color:#fff;font-weight:800;background:linear-gradient(135deg,#7c3aed,#a855f7);box-shadow:0 9px 24px rgba(124,58,237,.23)}.secondary{padding:13px 19px;border-radius:15px;color:#5e526b;font-weight:750;background:rgba(255,255,255,.72);border:1px solid var(--line)}
-    .section{margin-top:28px}.section-head{display:flex;align-items:end;justify-content:space-between;margin-bottom:13px}.section-title{font-size:18px;font-weight:800;letter-spacing:-.4px}.section-caption{font-size:12px;color:var(--muted)}
-    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.card{min-height:155px;padding:19px;border-radius:23px;background:var(--surface);border:1px solid var(--line);box-shadow:0 10px 30px rgba(54,32,88,.045);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}.card-icon{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:#f0e9ff;color:#7c3aed;font-size:19px;margin-bottom:16px}.card h3{margin:0 0 6px;font-size:15px}.card p{margin:0;color:var(--muted);font-size:12px;line-height:1.5}
-    .bottom{position:fixed;left:50%;bottom:max(14px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(590px,calc(100% - 24px));height:72px;padding:7px;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;border:1px solid rgba(255,255,255,.85);border-radius:24px;background:rgba(255,255,255,.76);box-shadow:0 16px 45px rgba(54,32,88,.14);backdrop-filter:blur(25px);-webkit-backdrop-filter:blur(25px);z-index:50}.tab{border-radius:18px;background:transparent;color:#8b8294;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px;font-weight:750}.tab-icon{font-size:20px;line-height:20px}.tab.active{color:#6d28d9;background:linear-gradient(145deg,#f3ebff,#fbf9ff);box-shadow:0 5px 16px rgba(124,58,237,.10)}
-    .page{display:none}.page.active{display:block}.fade{animation:fade .25s ease}@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
-    @media(max-width:700px){.shell{padding:12px 14px 105px}.topbar{height:58px}.brand-name{font-size:18px}.hero{padding:26px 22px;border-radius:27px}.hero h1{letter-spacing:-1.5px}.grid{grid-template-columns:1fr}.card{min-height:130px}.bottom{height:70px}}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ruby Chan V2</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",Inter,system-ui,sans-serif;background:#f6f3fb;color:#17151c}body{display:flex;justify-content:center}.app{width:min(1180px,100%);min-height:100vh;padding:28px 22px 120px}.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:26px}.brand{font-size:24px;font-weight:800;letter-spacing:-.8px;color:#7c3aed}.avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(145deg,#fff,#eadcff);border:1px solid #fff;box-shadow:0 8px 24px #7c3aed18;display:grid;place-items:center}.hero{padding:34px;border-radius:30px;background:linear-gradient(145deg,#fff,#f3ecff);border:1px solid #ffffffaa;box-shadow:0 20px 55px #4c2b7814}.eyebrow{font-size:11px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;color:#8b5cf6}.hero h1{font-size:clamp(34px,6vw,58px);line-height:1.02;letter-spacing:-2.5px;margin:10px 0}.hero p{max-width:620px;color:#706a78;font-size:15px;line-height:1.6}.continue{margin-top:20px;border:0;border-radius:16px;padding:14px 22px;background:#7c3aed;color:white;font-weight:750;box-shadow:0 12px 25px #7c3aed30}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:18px}.card{min-height:160px;padding:22px;border-radius:24px;background:#ffffffc9;border:1px solid #fff;box-shadow:0 14px 35px #3c287012}.icon{font-size:25px}.card h3{margin:18px 0 6px}.card p{margin:0;color:#77717f;font-size:13px}.nav{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);width:min(560px,calc(100% - 28px));height:72px;padding:7px;border-radius:24px;background:#fffffff0;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid #fff;box-shadow:0 16px 50px #3d23651f;display:flex;gap:6px}.nav button{flex:1;border:0;border-radius:18px;background:transparent;color:#827a8d;font:inherit;font-size:11px;font-weight:700}.nav button.active{background:#f0e7ff;color:#7c3aed;box-shadow:0 6px 18px #7c3aed18}.nav span{display:block;font-size:20px;margin-bottom:3px}@media(max-width:700px){.app{padding:18px 16px 110px}.grid{grid-template-columns:1fr}.hero{padding:25px}.nav{bottom:12px}}
+</style>
 </head>
-<body>
-<div class="app">
-  <main class="shell">
-    <header class="topbar">
-      <div class="brand"><div class="brand-mark">✦</div><div class="brand-name">Ruby Chan</div><span class="brand-version">V2</span></div>
-      <button class="profile" aria-label="Account">M</button>
-    </header>
-
-    <section id="home" class="page active fade">
-      <div class="hero"><div class="hero-content"><div class="eyebrow">Your AI companion space</div><h1>Welcome to Ruby Chan</h1><p>A clean new foundation for characters, conversations, and your personal AI experience.</p><div class="hero-actions"><button class="primary" data-tab="characters">Explore Characters</button><button class="secondary" data-tab="chat">Open Chat</button></div></div></div>
-      <div class="section"><div class="section-head"><div class="section-title">Ruby Chan V2</div><div class="section-caption">Foundation</div></div><div class="grid"><article class="card"><div class="card-icon">♢</div><h3>Characters</h3><p>Your AI characters will live here. Character data and personalities come in the next build step.</p></article><article class="card"><div class="card-icon">◌</div><h3>Conversations</h3><p>A dedicated chat experience will be connected after the foundation is stable.</p></article><article class="card"><div class="card-icon">⌘</div><h3>Settings</h3><p>Account, preferences, and platform controls will be added step by step.</p></article></div></div>
-    </section>
-
-    <section id="characters" class="page fade"><div class="hero"><div class="hero-content"><div class="eyebrow">Step 2</div><h1>Characters</h1><p>This page is intentionally clean. Characters will be added after the V2 foundation is approved.</p></div></div></section>
-    <section id="chat" class="page fade"><div class="hero"><div class="hero-content"><div class="eyebrow">Step 3</div><h1>Chat</h1><p>The conversation engine will be connected after character architecture is ready.</p></div></div></section>
-    <section id="settings" class="page fade"><div class="hero"><div class="hero-content"><div class="eyebrow">Step 4</div><h1>Settings</h1><p>Account and preferences will be added later. No old premium or payment UI is included in V2 foundation.</p></div></div></section>
-  </main>
-
-  <nav class="bottom" aria-label="Main navigation">
-    <button class="tab active" data-tab="home"><span class="tab-icon">⌂</span>Home</button>
-    <button class="tab" data-tab="characters"><span class="tab-icon">♡</span>Characters</button>
-    <button class="tab" data-tab="chat"><span class="tab-icon">◌</span>Chat</button>
-    <button class="tab" data-tab="settings"><span class="tab-icon">⚙</span>Settings</button>
-  </nav>
-</div>
-<script>
-(function(){
-  const pages=[...document.querySelectorAll('.page')],tabs=[...document.querySelectorAll('.tab')];
-  function open(name){pages.forEach(p=>p.classList.toggle('active',p.id===name));tabs.forEach(t=>t.classList.toggle('active',t.dataset.tab===name));window.scrollTo({top:0,behavior:'smooth'});}
-  document.addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)open(b.dataset.tab)});
-})();
-</script>
-</body>
-</html>
+<body><main class="app"><header class="top"><div class="brand">Ruby Chan</div><div class="avatar">✦</div></header><section class="hero"><div class="eyebrow">Version 2 · Foundation</div><h1>Welcome to Ruby Chan</h1><p>A clean new foundation for your AI companion platform. Characters, chat, account and every future feature will be built here step by step.</p><button class="continue">Continue</button></section><section class="grid"><article class="card"><div class="icon">♡</div><h3>Characters</h3><p>Your future character space.</p></article><article class="card"><div class="icon">◌</div><h3>Chat</h3><p>Your future conversations.</p></article><article class="card"><div class="icon">⚙</div><h3>Settings</h3><p>Your future account controls.</p></article></section></main><nav class="nav"><button class="active"><span>⌂</span>Home</button><button><span>♡</span>Characters</button><button><span>◌</span>Chat</button><button><span>⚙</span>Settings</button></nav></body></html>
