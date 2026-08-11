@@ -1,4 +1,4 @@
-/* Ruby Chan — final home polish */
+/* Ruby Chan — canonical home Quick Access */
 (function(){
   'use strict';
   if(window.__rubyPlatformV5) return;
@@ -20,7 +20,7 @@
       #page-home .hero h2{font-size:27px;color:#5b21b6;margin-bottom:7px;letter-spacing:-.5px;}
       #page-home .hero p{color:#6f6679;font-size:13px;line-height:1.6;}
       #page-home .quick-access{display:none!important;}
-      #page-home .ruby-quick-access{margin:0 0 22px;padding:20px;border-radius:24px;background:linear-gradient(145deg,#fff,#f8f5ff);border:1px solid rgba(124,58,237,.13);box-shadow:0 16px 42px rgba(60,40,120,.09);}
+      .ruby-quick-access{margin:0 0 22px;padding:20px;border-radius:24px;background:linear-gradient(145deg,#fff,#f8f5ff);border:1px solid rgba(124,58,237,.13);box-shadow:0 16px 42px rgba(60,40,120,.09);}
       .ruby-quick-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:17px;}
       .ruby-quick-kicker{font-size:10px;font-weight:900;letter-spacing:1.8px;color:#7c3aed;}
       .ruby-quick-head h3{margin:4px 0;font-size:22px;color:#18181b;}
@@ -39,22 +39,6 @@
       @media(max-width:360px){.ruby-quick-grid{grid-template-columns:1fr}.ruby-quick-card{min-height:105px}}
     `;
     document.head.appendChild(s);
-  }
-
-  function welcome(){
-    const home=document.getElementById('page-home');
-    const hero=home?.querySelector('.hero');
-    if(!home || !hero) return;
-    hero.innerHTML=`<h2 id="rubyWelcomeTitle">Welcome, Mario</h2><p id="rubyWelcomeText">Your private AI character space. Choose a character, continue your conversations and manage your account from one place.</p>`;
-    const sb=window.supabaseClient;
-    if(sb?.auth){
-      sb.auth.getSession().then(({data})=>{
-        const u=data?.session?.user,m=u?.user_metadata||{};
-        const name=m.full_name||m.name||m.username||'Mario';
-        const title=document.getElementById('rubyWelcomeTitle');
-        if(title) title.textContent=`Welcome, ${name}`;
-      }).catch(()=>{});
-    }
   }
 
   function quickAccess(){
@@ -83,6 +67,6 @@
     });
   }
 
-  function boot(){css();welcome();quickAccess();}
+  function boot(){css();quickAccess();}
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true}); else boot();
 })();
