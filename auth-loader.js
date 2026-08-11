@@ -4,10 +4,8 @@
   if (window.__rubyAuthLoaderStarted) return;
   window.__rubyAuthLoaderStarted = true;
 
-  // One clean UI path. Telegram-only mode is handled by platform-ui-v4.
-  // Do not load the old Telegram history loader because it queried Supabase
-  // during startup and could leave the UI waiting on an auth lock.
-  const v = '20260811-11';
+  // One clean UI path. Telegram is the chat source of truth.
+  const v = '20260811-12';
   const scripts = [
     `./supabase.js?v=${v}`,
     `./telegram-config.js?v=${v}`,
@@ -18,7 +16,9 @@
     `./daily-bonus-v2.js?v=${v}`,
     `./ui-polish.js?v=${v}`,
     `./account-settings.js?v=${v}`,
-    `./platform-ui-v3.js?v=${v}`
+    `./platform-ui-v3.js?v=${v}`,
+    `./character-new-chat.js?v=${v}`,
+    `./quick-access.js?v=${v}`
   ];
 
   let index = 0;
