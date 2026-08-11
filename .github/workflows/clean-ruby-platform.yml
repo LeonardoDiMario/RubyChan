@@ -1,0 +1,94 @@
+name: Clean Ruby Chan platform
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  clean-platform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clean old markup and boot flash
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          path = Path('index.html')
+          s = path.read_text(encoding='utf-8')
+
+          # Keep exactly one clean Supabase bootstrap block in <head>.
+          s = re.sub(r'\s*<script src="https://cdn\.jsdelivr\.net/npm/@supabase/supabase-js@2"></script>\s*', '\n', s)
+          supabase_re = re.compile(
+              r'\s*<script>\s*const SUPABASE_URL\s*=\s*"[^"]+";\s*'
+              r'const SUPABASE_PUBLISHABLE_KEY\s*=\s*"[^"]+";\s*'
+              r'const supabaseClient\s*=\s*supabase\.createClient\(\s*'
+              r'SUPABASE_URL,\s*SUPABASE_PUBLISHABLE_KEY\s*\);\s*</script>\s*',
+              re.S,
+          )
+          s = supabase_re.sub('\n', s)
+          bootstrap = '''\n<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>\n<script>\nconst SUPABASE_URL = "https://hcbajvladlvhklelbxdr.supabase.co";\nconst SUPABASE_PUBLISHABLE_KEY = "sb_publishable_eKKXyB0rc7QUwTbbydi8Xw_t0n27eIj";\nconst supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);\n</script>\n<style id="boot-guard">html{visibility:hidden}html.app-ready{visibility:visible}</style>\n'''
+          s = s.replace('<head>', '<head>' + bootstrap, 1)
+
+          # Replace the old Home quick-access/chatting markup with a clean home hero only.
+          home = '''<section id="page-home" class="page active">\n    <div class="hero">\n        <h2>Welcome to Ruby Chan ✨</h2>\n        <p>Choose a character from Characters, or open Chat to continue through Telegram.</p>\n    </div>\n</section>'''
+          s, n = re.subn(r'<section id="page-home"\s+class="page active">.*?</section>', home, s, count=1, flags=re.S)
+          if n != 1:
+              raise SystemExit('Home section not found')
+
+          # Remove local browser chat-history persistence. Telegram is the chat source of truth.
+          old_chat = re.compile(r'function addChatToHistory\(character\)\{.*?\n\}\n\nfunction renderChatHistory\(\)\{.*?\n\}\n\nfunction startChat\(character\)\{.*?\n\}', re.S)
+          new_chat = '''function addChatToHistory(character){\n    return;\n}\n\nfunction renderChatHistory(){\n    const list = document.getElementById('chatHistoryList');\n    if(!list) return;\n    list.innerHTML = '<div class="chat-empty" id="chatEmpty">💬<br><span>Open a character to continue in Telegram.</span></div>';\n}\n\nfunction startChat(character){\n    const usernames = {\n        Sakura: 'Rubby_Chan_Bot',\n        Yuna: 'Rubby_Chan_Bot',\n        Rin: 'Rubby_Chan_Bot',\n        Akari: 'Rubby_Chan_Bot',\n        Hana: 'Rubby_Chan_Bot',\n        Reina: 'Rubby_Chan_Bot'\n    };\n    const username = usernames[character] || 'Rubby_Chan_Bot';\n    window.location.href = 'https://t.me/' + username;\n}'''
+          s, n = old_chat.subn(new_chat, s, count=1)
+          if n != 1:
+              raise SystemExit('Chat functions not found')
+
+          css = '''\n/* Final platform cleanup */\n.character-search{width:100%;margin:10px 0 14px;padding:12px 14px;border:1px solid rgba(124,58,237,.18);border-radius:14px;background:#fff;font-size:15px;outline:none;}\n.character-search:focus{border-color:#7c3aed;box-shadow:0 0 0 3px rgba(124,58,237,.10);}\n.character-card{position:relative;}\n.character-ability{display:none;margin:8px 0 10px;padding:8px 10px;border-radius:10px;background:#f5efff;color:#6d28d9;font-size:11px;line-height:1.4;text-align:left;}\n.character-card:hover .character-ability,.character-card:focus-within .character-ability{display:block;}\n'''
+          s = s.replace('</style>', css + '</style>', 1)
+
+          marker = '<p class="section-subtitle">\n        Choose your AI character\n    </p>'
+          replacement = marker + '\n\n    <input id="characterSearch" class="character-search" type="search" placeholder="Search characters..." oninput="filterCharacters(this.value)">'
+          if marker in s:
+              s = s.replace(marker, replacement, 1)
+
+          abilities = {
+              'Sakura':'Warm conversation, playful replies, and gentle companionship.',
+              'Yuna':'Calm conversation, thoughtful replies, and a mysterious tone.',
+              'Rin':'Quiet, intelligent conversation with composed responses.',
+              'Akari':'Energetic conversation, confidence, and bold personality.',
+              'Hana':'Friendly, sweet, romantic-style conversation.',
+              'Reina':'Cool, intelligent, composed conversation.',
+              'Ruby':'Elegant, affectionate, confident premium character.',
+              'Velvet':'Mysterious, teasing, intelligent premium character.',
+              'Celeste':'Sweet, dreamy, romantic premium character.',
+              'Seraphine':'Royal, calm, possessive premium character.'
+          }
+          for name, ability in abilities.items():
+              pattern = rf'(<h3>{re.escape(name)}</h3>\s*<p>.*?</p>)'
+              repl = rf'\1<div class="character-ability"><strong>Ability</strong><br>{ability}</div>'
+              s = re.sub(pattern, repl, s, count=1, flags=re.S)
+
+          search_js = '''\nfunction filterCharacters(query){\n    const q = (query || '').trim().toLowerCase();\n    document.querySelectorAll('#page-characters .character-card').forEach(card => {\n        const text = card.textContent.toLowerCase();\n        card.style.display = !q || text.includes(q) ? '' : 'none';\n    });\n}\n\n'''
+          s = s.replace('/* =====================================================\n   START\n===================================================== */', search_js + '/* =====================================================\n   START\n===================================================== */', 1)
+
+          s = s.replace('        renderChatHistory();\n\n    }', '        renderChatHistory();\n        document.documentElement.classList.add("app-ready");\n\n    }', 1)
+
+          path.write_text(s, encoding='utf-8')
+
+      - name: Commit cleaned index
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No changes needed"
+          else
+            git commit -m "Clean old platform markup and prevent UI flash"
+            git push
+          fi
