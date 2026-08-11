@@ -3,7 +3,7 @@
   'use strict';
   if (window.__rubyAuthLoaderStarted) return;
   window.__rubyAuthLoaderStarted = true;
-  const v = '20260811-6';
+  const v = '20260811-7';
   const scripts = [
     `./supabase.js?v=${v}`,
     `./telegram-config.js?v=${v}`,
@@ -16,7 +16,8 @@
     `./daily-bonus-v2.js?v=${v}`,
     `./character-new-chat.js?v=${v}`,
     `./ui-polish.js?v=${v}`,
-    `./account-settings.js?v=${v}`
+    `./account-settings.js?v=${v}`,
+    `./telegram-only-mode.js?v=${v}`
   ];
   let i=0;
   function loadNext(){if(i>=scripts.length)return;const src=scripts[i++];if(document.querySelector(`script[src="${src}"]`))return loadNext();const s=document.createElement('script');s.src=src;s.async=false;s.onload=loadNext;s.onerror=()=>{console.error('Ruby Chan: failed to load',src);loadNext()};document.head.appendChild(s)}
