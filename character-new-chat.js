@@ -1,8 +1,8 @@
 /* Ruby Chan — clean character selection + single-character detail */
 (function () {
   'use strict';
-  if (window.__rubyCharacterCleanV2) return;
-  window.__rubyCharacterCleanV2 = true;
+  if (window.__rubyCharacterCleanV3) return;
+  window.__rubyCharacterCleanV3 = true;
 
   const details = {
     Sakura: 'Warm, cheerful and affectionate. She keeps conversations light, caring and playful while making the user feel comfortable.',
@@ -14,7 +14,7 @@
   };
 
   const style = document.createElement('style');
-  style.id = 'ruby-character-clean-v2-style';
+  style.id = 'ruby-character-clean-v3-style';
   style.textContent = `
     #page-characters .character-card{cursor:pointer;transition:border-color .2s,box-shadow .2s,transform .2s;}
     #page-characters .character-card:hover{transform:translateY(-2px);}
@@ -35,6 +35,9 @@
     .ruby-character-personality{padding:15px 14px;border-radius:17px;background:#fff;border:1px solid rgba(124,58,237,.11);text-align:left;color:#5e5667;font-size:13px;line-height:1.65;box-shadow:0 7px 20px rgba(60,40,120,.05);}
     .ruby-character-personality strong{display:block;color:#21172d;font-size:14px;margin-bottom:4px;}
     .ruby-character-detail-chat{width:100%;margin-top:16px;padding:13px;border:0;border-radius:13px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-weight:850;font-size:14px;cursor:pointer;box-shadow:0 10px 24px rgba(124,58,237,.22);}
+    #page-characters .ruby-character-search + .ruby-character-search,
+    #page-characters .character-search + .ruby-character-search,
+    #page-characters .ruby-character-search + .character-search{display:none!important;}
   `;
   document.head.appendChild(style);
 
@@ -44,14 +47,24 @@
     window.location.href = `https://t.me/${bot}?start=${encodeURIComponent('character_' + name)}`;
   }
 
+  function removeDuplicateSearches(page) {
+    const searches = [...page.querySelectorAll('.ruby-character-search, .character-search, .ruby-platform-search')];
+    if (searches.length <= 1) return;
+    const keep = searches[0];
+    searches.slice(1).forEach(el => el.remove());
+    keep.style.display = '';
+  }
+
   function openDetail(card) {
     const page = document.getElementById('page-characters');
     const grid = page?.querySelector('.characters-grid');
-    const search = page?.querySelector('.character-search,.ruby-platform-search');
+    if (!page || !grid) return;
+    removeDuplicateSearches(page);
+    const search = page?.querySelector('.character-search,.ruby-character-search,.ruby-platform-search');
     const subtitle = page?.querySelector('.section-subtitle');
     const title = page?.querySelector('.section-title');
     const detail = page?.querySelector('.ruby-character-detail');
-    if (!page || !grid || !detail) return;
+    if (!detail) return;
 
     const name = card.dataset.rubyCharacter;
     const tags = card.dataset.rubyTags || '';
@@ -76,7 +89,9 @@
       detail.classList.remove('open');
       detail.innerHTML = '';
       grid.querySelectorAll('.character-card').forEach(c => c.classList.remove('ruby-detail-hidden'));
-      if (search) search.style.display = '';
+      removeDuplicateSearches(page);
+      const restoredSearch = page.querySelector('.character-search,.ruby-character-search,.ruby-platform-search');
+      if (restoredSearch) restoredSearch.style.display = '';
       if (subtitle) subtitle.style.display = '';
       if (title) title.style.display = '';
     };
@@ -87,6 +102,7 @@
     const page = document.getElementById('page-characters');
     const grid = page?.querySelector('.characters-grid');
     if (!page || !grid) return;
+    removeDuplicateSearches(page);
     let detail = page.querySelector('.ruby-character-detail');
     if (!detail) {
       detail = document.createElement('div');
