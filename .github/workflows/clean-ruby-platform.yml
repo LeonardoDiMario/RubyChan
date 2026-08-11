@@ -92,3 +92,5 @@ jobs:
             git commit -m "Clean old platform markup and prevent UI flash"
             git push
           fi
+
+# trigger-cleanup
