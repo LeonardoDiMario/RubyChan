@@ -2,6 +2,27 @@
 (function () {
   'use strict';
 
+  function removeLegacyPremiumSections(){
+    const root=document.getElementById('page-characters')||document.body;
+    root.querySelectorAll('h1,h2,h3,h4,h5,h6,p,span,div,section,article').forEach(el=>{
+      const text=(el.textContent||'').replace(/\s+/g,' ').trim();
+      if(!/^👑?\s*Premium\s+(Items|Characters)\s*👑?$/i.test(text)) return;
+      let target=el;
+      for(let i=0;i<4 && target.parentElement;i++){
+        const p=target.parentElement;
+        const pt=(p.textContent||'').replace(/\s+/g,' ').trim();
+        if(pt.length<=700) target=p;
+        if(pt.length>700) break;
+      }
+      target.style.setProperty('display','none','important');
+      target.setAttribute('data-ruby-legacy-premium','hidden');
+    });
+    root.querySelectorAll('[class*="premium-items"],[id*="premium-items"],[class*="premium-characters"],[id*="premium-characters"]').forEach(el=>{
+      el.style.setProperty('display','none','important');
+      el.setAttribute('data-ruby-legacy-premium','hidden');
+    });
+  }
+
   function boot() {
     if (document.getElementById('ruby-premium-ui')) return;
 
@@ -22,6 +43,11 @@
       @media(max-width:520px){header{padding-left:13px!important;padding-right:10px!important}.logo{font-size:23px!important}.content-container{padding-left:12px!important;padding-right:12px!important}.hero{padding:22px!important;border-radius:23px!important}#rubyGiftFloat{right:14px;bottom:80px}}
     `;
     document.head.appendChild(style);
+
+    removeLegacyPremiumSections();
+    const premiumObserver=new MutationObserver(removeLegacyPremiumSections);
+    premiumObserver.observe(document.body,{childList:true,subtree:true});
+    setTimeout(()=>premiumObserver.disconnect(),120000);
 
     const gift = document.createElement('button');
     gift.id = 'rubyGiftFloat';
