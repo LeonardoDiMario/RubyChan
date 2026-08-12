@@ -1,0 +1,64 @@
+name: Reliable Ruby Premium UI
+on:
+  push:
+    branches:
+      - main
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.event.head_commit.message != 'Apply reliable Ruby premium UI'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch UI
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          css = r'''
+          <style id="rp-reliable-ui">
+          :root{--rp-glass:rgba(255,255,255,.035);--rp-border:rgba(255,255,255,.08);--rp-muted:#9da6c5;--rp-gold:#e8cf8a;--rp-cyan:#4cc9ff}
+          html,body{background:radial-gradient(circle at 15% 0%,#1a1834,#0b0c10 48%,#07080d)!important;color:#f7f8ff!important}
+          .hero,.panel,.card,.historybox,.side,.package,.memory,.setting,.pill,.bpanel,#historyControls,.hc-card,.conversation,.char,.historyhead,.telegrambar{background:var(--rp-glass)!important;border:1px solid var(--rp-border)!important;backdrop-filter:blur(12px)!important;-webkit-backdrop-filter:blur(12px)!important;box-shadow:0 14px 45px rgba(0,0,0,.27)!important;border-radius:16px!important}
+          .section-head h2,.brand,.hero h1{background:linear-gradient(90deg,#fff,#c4a7ff,#55defe,#f2d49a);-webkit-background-clip:text;background-clip:text;color:transparent}
+          .app{width:min(1040px,100%)!important;padding:10px 10px 92px!important}.hero{padding:16px!important}.section-head{margin:11px 1px 7px!important}.section-head h2{font-size:16px!important}.section-head p{font-size:10px!important;color:var(--rp-muted)!important}
+          .grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}.card{padding:11px!important;min-height:92px!important}.characters{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}.char img{height:132px!important}.charbody{padding:8px!important}.charname b{font-size:12px!important}.char p{font-size:9px!important;min-height:26px!important}.char .btn{padding:7px 8px!important;font-size:10px!important}
+          .history-layout{grid-template-columns:1fr!important;gap:8px!important}.historybox{min-height:470px!important}.historymessages{padding:10px!important}.msg{font-size:11px!important;padding:8px 10px!important}
+          .nav{bottom:20px!important;height:58px!important;border-radius:18px!important;background:rgba(10,12,22,.78)!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important;transition:bottom .3s cubic-bezier(.22,.61,.36,1),opacity .3s ease!important}.nav.rp-hide{bottom:-100px!important;opacity:0!important}
+          #rpModal{position:fixed;inset:0;z-index:5000;display:flex;align-items:flex-end;justify-content:center;background:rgba(2,4,10,.68);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);opacity:0;pointer-events:none;transition:opacity .22s ease}#rpModal.open{opacity:1;pointer-events:auto}#rpModal .rp-sheet{position:relative;width:min(520px,100%);max-height:88vh;overflow:auto;padding:14px;background:linear-gradient(180deg,rgba(18,20,40,.98),rgba(8,10,20,.99));border:1px solid rgba(232,207,138,.22);border-bottom:0;border-radius:24px 24px 0 0;transform:translateY(30px);transition:transform .28s cubic-bezier(.2,.8,.2,1);box-shadow:0 -24px 70px rgba(0,0,0,.6)}#rpModal.open .rp-sheet{transform:translateY(0)}#rpModal .rp-close{position:absolute;right:10px;top:10px;width:34px;height:34px;border-radius:11px;border:1px solid rgba(255,255,255,.12);background:rgba(7,10,20,.78);color:#fff;font-size:20px}#rpModal .rp-head{display:grid;grid-template-columns:104px 1fr;gap:12px;align-items:center;padding:2px 2px 10px}#rpModal img{width:104px;height:134px;object-fit:cover;border-radius:16px;border:1px solid rgba(232,207,138,.2)}#rpModal .rp-name{font-size:22px;font-weight:950;background:linear-gradient(90deg,#fff,#fff2b8,#c9a9ff);-webkit-background-clip:text;color:transparent}#rpModal .rp-chip{display:inline-flex;margin-top:5px;padding:5px 8px;border-radius:999px;font-size:8px;color:#f4e8ba;border:1px solid rgba(232,207,138,.22)}#rpModal .rp-personality{margin-top:8px;padding:12px;border-radius:15px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.08)}#rpModal .rp-personality h4{margin:0 0 6px;font-size:11px;color:#fff2b8}#rpModal .rp-personality p{margin:0;color:#cbd2e5;font-size:10px;line-height:1.6;white-space:pre-wrap}#rpModal .rp-chat{width:100%;margin-top:10px;padding:11px;border:1px solid rgba(232,207,138,.35);border-radius:12px;background:linear-gradient(135deg,#278dff,#6947df 60%,#9e71ff);color:#fff;font-size:12px;font-weight:950}
+          @media(max-width:600px){.characters{grid-template-columns:repeat(2,minmax(0,1fr))!important}.char img{height:124px!important}.packages{grid-template-columns:repeat(2,minmax(0,1fr))!important}#rpModal .rp-sheet{padding:12px;border-radius:20px 20px 0 0}#rpModal .rp-head{grid-template-columns:88px 1fr}#rpModal img{width:88px;height:114px}}
+          </style>
+          '''
+          js = r'''
+          <script id="rp-reliable-js">
+          (()=>{
+            document.querySelectorAll('#characterDetailModal,#rubyPremiumCharacterModal,#rpModal').forEach(x=>x.remove());
+            const m=document.createElement('div');m.id='rpModal';m.innerHTML='<div class="rp-sheet"><button class="rp-close" type="button">×</button><div class="rp-head"><img id="rpImg" alt=""><div><div class="rp-name" id="rpName">Character</div><span class="rp-chip">AI Companion</span></div></div><div class="rp-personality"><h4>Personality &amp; Traits</h4><p id="rpP">—</p></div><button class="rp-chat" type="button">💬 Chat Now</button></div>';document.body.appendChild(m);
+            const close=m.querySelector('.rp-close'), chat=m.querySelector('.rp-chat'), img=m.querySelector('#rpImg'), name=m.querySelector('#rpName'), pp=m.querySelector('#rpP');let chosen=null;
+            const db=window.supabase?.createClient?.('https://hcbajvladlvhklelbxdr.supabase.co','sb_publishable_eKKXyB0rc7QUwTbdi8Xw_t0n27eIj');
+            const open=async(card)=>{chosen=card;const b=card.querySelector('.choose');if(!b||!db)return;const q=await db.from('characters').select('id,name,image_url,description,personality,traits,speaking_style,backstory,scenario').eq('id',b.dataset.id).maybeSingle();if(!q.data)return;const c=q.data;img.src=c.image_url||('https://api.dicebear.com/9.x/adventurer/svg?seed='+encodeURIComponent(c.name||'Character'));name.textContent=c.name||'Character';pp.textContent=[c.personality,c.traits,c.speaking_style,c.description].filter(Boolean).join('\n\n')||'Warm, engaging and private AI companion.';m.classList.add('open');document.body.style.overflow='hidden'};
+            close.onclick=()=>{m.classList.remove('open');document.body.style.overflow=''};m.onclick=e=>{if(e.target===m)close.click()};document.addEventListener('keydown',e=>{if(e.key==='Escape')close.click()});chat.onclick=()=>{const b=chosen?.querySelector('.choose');close.click();if(b)b.click()};
+            const bind=()=>document.querySelectorAll('#characterGrid .char').forEach(card=>{if(card.dataset.rpBound)return;card.dataset.rpBound='1';card.addEventListener('click',e=>{if(!e.target.closest('.choose'))e.preventDefault();e.stopPropagation();open(card)},true)});bind();const g=document.getElementById('characterGrid');if(g)new MutationObserver(bind).observe(g,{childList:true,subtree:true});
+            let last=scrollY;addEventListener('scroll',()=>{const n=scrollY,v=document.querySelector('.nav');if(v&&Math.abs(n-last)>4)v.classList.toggle('rp-hide',n>last&&n>20);last=n},{passive:true});
+          })();
+          </script>
+          '''
+          s=re.sub(r'<style id="rp-reliable-ui">.*?</style>','',s,flags=re.S)
+          s=re.sub(r'<script id="rp-reliable-js">.*?</script>','',s,flags=re.S)
+          s=s.replace('</head>',css+'\n</head>',1)
+          s=s.replace('</body>',js+'\n</body>',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Apply reliable Ruby premium UI' || exit 0
+          git push origin HEAD:main
