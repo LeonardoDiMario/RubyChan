@@ -1,0 +1,103 @@
+name: Fix visible chat history list
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Fix visible chat history list'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch history visibility and rendering
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          css=r'''
+          <style id="history-visible-fix">
+          .history-layout{display:grid!important;grid-template-columns:1fr!important;gap:12px!important}
+          .history-layout>.side{display:block!important;width:100%!important;min-height:90px!important;padding:12px!important}
+          #conversationList{display:flex!important;flex-direction:column!important;gap:8px!important;min-height:20px!important}
+          .hc-row{display:grid!important;grid-template-columns:auto 1fr auto!important;align-items:center!important;min-height:58px!important;background:#11182ee8!important;border:1px solid #2d3b62!important;color:#fff!important;visibility:visible!important;opacity:1!important}
+          .hc-main{display:block!important;visibility:visible!important;color:#fff!important;min-height:40px!important;text-decoration:none!important}
+          .hc-main b{color:#fff!important;font-size:13px!important;visibility:visible!important}
+          .hc-main small{color:#9da6c5!important;font-size:10px!important;visibility:visible!important}
+          .hc-actions{display:flex!important;visibility:visible!important}
+          .hc-actions button{display:inline-grid!important;place-items:center!important}
+          #historyControls{position:relative!important;z-index:5!important;display:flex!important}
+          </style>
+          '''
+          if 'id="history-visible-fix"' not in s:
+              s=s.replace('</head>',css+'</head>',1)
+          marker='<!-- RUBY_HISTORY_VISIBLE_FIX -->'
+          js=r'''
+          <script>
+          // RUBY_HISTORY_VISIBLE_FIX
+          (()=>{
+            const db2=window.supabase?.createClient?.('https://hcbajvladlvhklelbxdr.supabase.co','sb_publishable_eKKXyB0rc7QUwTbbydi8Xw_t0n27eIj');
+            const TG=window.Telegram?.WebApp||null;
+            const el=id=>document.getElementById(id);
+            const esc2=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+            async function ensureAuth2(){
+              let u=(await db2.auth.getUser()).data.user;
+              if(u?.id)return u.id;
+              try{
+                const d=localStorage.getItem('ruby_device') || ((crypto.randomUUID?crypto.randomUUID():String(Date.now()))+'-'+Math.random());
+                localStorage.setItem('ruby_device',d);
+                const r=await db2.functions.invoke('guest-session',{body:{device_id:d,init_data:TG?.initData||''}});
+                if(r?.data?.session) await db2.auth.setSession(r.data.session);
+              }catch(e){console.warn('history auth',e)}
+              return (await db2.auth.getUser()).data.user?.id||null;
+            }
+            async function renderVisibleHistory(){
+              const host=el('conversationList'); if(!host)return;
+              const uid=await ensureAuth2(); if(!uid){host.innerHTML='<div class="hc-empty">Open Ruby Chan from Telegram to view your history.</div>';return;}
+              const r=await db2.from('conversations').select('id,character_id,title,created_at,updated_at,is_pinned,pin_position,expires_at').eq('user_id',uid).eq('source','telegram').order('is_pinned',{ascending:false}).order('pin_position',{ascending:true,nullsFirst:false}).order('created_at',{ascending:false}).limit(100);
+              if(r.error){host.innerHTML='<div class="hc-empty">History error: '+esc2(r.error.message)+'</div>';return;}
+              const rows=r.data||[];
+              if(!rows.length){host.innerHTML='<div class="hc-empty">No Telegram conversations yet.</div>';return;}
+              const ids=[...new Set(rows.map(x=>x.character_id))];
+              const cq=await db2.from('characters').select('id,name,image_url').in('id',ids);
+              const cm=new Map((cq.data||[]).map(c=>[c.id,c]));
+              host.innerHTML=rows.map(c=>{
+                const ch=cm.get(c.character_id)||{};
+                const days=c.expires_at?Math.max(0,Math.ceil((new Date(c.expires_at)-Date.now())/86400000)):0;
+                const sub=c.is_pinned?'📌 Pinned':(c.expires_at?`Auto-deletes in ${days} day${days===1?'':'s'}`:'');
+                return `<div class="hc-row ${c.is_pinned?'pinned':''}" data-cid="${esc2(c.id)}"><input class="hc-check" type="checkbox"><button class="hc-main" type="button"><b>${esc2(c.title||((ch.name||'Chat')+' Chat'))}</b><small>${esc2(ch.name||'Character')} · <span class="hc-exp">${esc2(sub)}</span></small></button><div class="hc-actions"><button type="button" data-action="pin">${c.is_pinned?'📌':'📍'}</button><button type="button" class="danger" data-action="delete">🗑</button></div></div>`;
+              }).join('');
+              host.querySelectorAll('.hc-main').forEach(b=>b.addEventListener('click',()=>{
+                const row=b.closest('.hc-row'); const id=row?.dataset.cid; const main=document.querySelector(`[data-cid="${CSS.escape(id)}"] .hc-main`); if(main) main.dispatchEvent(new Event('history-open',{bubbles:true}));
+              }));
+              host.querySelectorAll('.hc-row').forEach(row=>row.addEventListener('history-open',async()=>{
+                const id=row.dataset.cid; const c=rows.find(x=>x.id===id); if(!c)return;
+                const cid=String(TG?.initDataUnsafe?.user?.id||new URLSearchParams(location.search).get('telegram_chat_id')||'');
+                await db2.rpc('set_telegram_conversation',{p_user_id:uid,p_telegram_chat_id:cid,p_conversation_id:id});
+                const q=await db2.from('characters').select('name,image_url').eq('id',c.character_id).maybeSingle();
+                el('chatName').textContent=q.data?.name||c.title||'Conversation';
+                el('chatAvatar').src=q.data?.image_url||el('chatAvatar').src;
+                const m=await db2.from('messages').select('role,content,created_at').eq('conversation_id',id).eq('user_id',uid).order('created_at');
+                el('historyMessages').innerHTML=(m.data||[]).map(x=>`<div class="msg ${x.role==='user'?'user':'ai'}">${esc2(x.content)}</div>`).join('')||'<div class="msg ai">No messages yet.</div>';
+                const u='https://t.me/Rubby_Chan_Bot'; if(TG?.openTelegramLink)TG.openTelegramLink(u); else window.open(u,'_blank');
+              }));
+              if(el('historyControls'))el('historyControls').style.display='flex';
+            }
+            document.querySelectorAll('#navChat,#homeHistory,#cardHistory').forEach(n=>n.addEventListener('click',()=>setTimeout(renderVisibleHistory,250)));
+            const chat=el('chat'); if(chat)new MutationObserver(()=>{if(chat.classList.contains('active'))setTimeout(renderVisibleHistory,150)}).observe(chat,{attributes:true,attributeFilter:['class']});
+            setTimeout(renderVisibleHistory,900);
+          })();
+          </script>
+          '''
+          if marker not in s:
+              s=s.replace('</body>',marker+js+'</body>',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Fix visible chat history list'
+          git push
