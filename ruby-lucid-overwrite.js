@@ -23,7 +23,6 @@
     };
     addCss();
     load('settings-runtime.js?v=20260813')
-      .then(()=>load('plan-badges.js?v=20260813'))
       .then(()=>load('premium-runtime.js?v=20260813'))
       .catch(e=>console.error('Ruby UI runtime failed',e));
   };
