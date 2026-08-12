@@ -1,0 +1,48 @@
+name: Fix RubyChan history session
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Fix history session timing'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch history session timing
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old="async function auth(){if(uid)return uid;const u=await db.auth.getUser();uid=u.data.user?.id||null;return uid}"
+          new="""async function auth(){
+            if(uid)return uid;
+            let u=await db.auth.getUser();
+            uid=u.data.user?.id||null;
+            if(uid)return uid;
+            const tgdata=tg?.initData||'';
+            let device_id=localStorage.getItem('ruby_device');
+            if(!device_id){device_id=(crypto.randomUUID?crypto.randomUUID():String(Date.now()))+'-'+Math.random();localStorage.setItem('ruby_device',device_id)}
+            const r=await db.functions.invoke('guest-session',{body:{device_id,init_data:tgdata}});
+            if(r.error||!r.data?.session)return null;
+            const set=await db.auth.setSession(r.data.session);
+            if(set.error)return null;
+            u=await db.auth.getUser();
+            uid=u.data.user?.id||null;
+            return uid;
+          }"""
+          if old not in s:
+              raise SystemExit('history auth function not found')
+          s=s.replace(old,new,1)
+          s=s.replace('            loadHC();\n          })();','            setTimeout(loadHC, 1200);\n          })();',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Fix history session timing'
+          git push
