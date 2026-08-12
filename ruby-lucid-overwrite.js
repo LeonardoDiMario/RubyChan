@@ -1,5 +1,4 @@
 (()=>{
-  // This file is loaded by index.html. It is the single entry point for the current in-place UI overwrite.
   const boot=()=>{
     if(document.documentElement.dataset.rubyLucidBoot==='1') return;
     document.documentElement.dataset.rubyLucidBoot='1';
@@ -23,7 +22,7 @@
       document.head.appendChild(l);
     };
     addCss();
-    load('settings-runtime.js?v=20260813').catch(e=>console.error('Ruby settings runtime failed',e));
+    load('settings-runtime.js?v=20260813').then(()=>load('plan-badges.js?v=20260813')).catch(e=>console.error('Ruby UI runtime failed',e));
   };
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
