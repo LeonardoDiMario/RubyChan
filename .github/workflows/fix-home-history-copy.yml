@@ -1,0 +1,38 @@
+name: Fix homepage and history copy
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update UI copy
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          css = '''<style id="ruby-copy-fix">
+          .hero h1 span{background:none!important;-webkit-background-clip:initial!important;background-clip:initial!important;color:#a95d83!important;-webkit-text-fill-color:#a95d83!important}
+          </style>'''
+          if 'id="ruby-copy-fix"' not in s:
+              s = s.replace('</head>', css + '\n</head>', 1)
+
+          js = '''<script id="ruby-copy-cleanup">(()=>{const clean=()=>{document.querySelectorAll('body *').forEach(el=>{if(el.children.length===0){const t=(el.textContent||'').trim().toLowerCase();if(t==='chat with characters'||t==='premium telegram history')el.remove()}})};clean();new MutationObserver(clean).observe(document.body,{childList:true,subtree:true})})();</script>'''
+          if 'id="ruby-copy-cleanup"' not in s:
+              s = s.replace('</body>', js + '\n</body>', 1)
+
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Fix homepage title color and remove duplicate history copy' || exit 0
+          git push origin HEAD:main
