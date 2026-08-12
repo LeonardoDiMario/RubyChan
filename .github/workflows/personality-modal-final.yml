@@ -1,0 +1,81 @@
+name: Apply personality modal final
+on:
+  push:
+    branches:
+      - main
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch personality modal
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          marker='id="personality-modal-final"'
+          if marker in s:
+              raise SystemExit(0)
+
+          # Remove the old modal markup, regardless of its current wording.
+          s = re.sub(r'<div id="characterDetailModal"[^>]*>.*?</div></div>', '', s, count=1, flags=re.S)
+          s = re.sub(r'<script id="compact-premium-v2-js">.*?</script>\s*', '', s, flags=re.S)
+          s = re.sub(r'<script id="personality-modal-v2-js">.*?</script>\s*', '', s, flags=re.S)
+
+          css = r'''
+<style id="personality-modal-final">
+#characterDetailModal{position:fixed;inset:0;display:none;align-items:flex-end;justify-content:center;background:rgba(2,5,13,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:1000;opacity:0;transition:opacity .22s ease}
+#characterDetailModal.open{display:flex;opacity:1}
+#characterDetailModal .pm-panel{width:min(520px,100%);max-height:88vh;overflow:auto;padding:14px;background:linear-gradient(180deg,rgba(17,20,39,.98),rgba(8,11,22,.99));border:1px solid rgba(232,207,138,.24);border-bottom:0;border-radius:24px 24px 0 0;box-shadow:0 -24px 70px rgba(0,0,0,.55),0 0 45px rgba(145,83,255,.13);transform:translateY(28px);transition:transform .28s cubic-bezier(.2,.8,.2,1);position:relative}
+#characterDetailModal.open .pm-panel{transform:translateY(0)}
+#characterDetailModal .pm-close{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:11px;border:1px solid rgba(255,255,255,.12);background:rgba(7,10,20,.75);color:#fff;font-size:19px;z-index:2}
+#characterDetailModal .pm-top{display:grid;grid-template-columns:100px 1fr;gap:12px;align-items:center;padding:4px 2px 10px}
+#characterDetailModal .pm-top img{width:100px;height:132px;object-fit:cover;border-radius:16px;border:1px solid rgba(232,207,138,.2)}
+#characterDetailModal .pm-name{font-size:22px;font-weight:950;background:linear-gradient(90deg,#fff,#fff2b8,#c8a6ff);-webkit-background-clip:text;color:transparent}
+#characterDetailModal .pm-tag{display:inline-flex;margin-top:5px;padding:5px 8px;border-radius:999px;font-size:8px;color:#f2e7bc;border:1px solid rgba(232,207,138,.24);background:rgba(232,207,138,.06)}
+#characterDetailModal .pm-personality{padding:12px;border-radius:15px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.018));border:1px solid rgba(232,207,138,.16)}
+#characterDetailModal .pm-personality h4{margin:0 0 7px;font-size:11px;color:#fff2b8;letter-spacing:.6px;text-transform:uppercase}
+#characterDetailModal .pm-personality p{margin:0;color:#d7dcef;font-size:10.5px;line-height:1.65;white-space:pre-wrap}
+#characterDetailModal .pm-chat{width:100%;margin-top:10px;padding:11px;border:1px solid rgba(232,207,138,.35);border-radius:12px;background:linear-gradient(135deg,#278dff,#6947df 60%,#9e71ff);color:#fff;font-size:12px;font-weight:950}
+@media(max-width:600px){#characterDetailModal .pm-panel{border-radius:20px 20px 0 0;padding:12px}#characterDetailModal .pm-top{grid-template-columns:86px 1fr}#characterDetailModal .pm-top img{width:86px;height:114px}#characterDetailModal .pm-name{font-size:20px}}
+</style>
+'''
+          s = s.replace('</head>', css + '</head>', 1)
+
+          modal = r'''
+<div id="characterDetailModal" aria-hidden="true"><div class="pm-panel" role="dialog" aria-modal="true"><button class="pm-close" id="pmClose" type="button" aria-label="Close">×</button><div class="pm-top"><img id="pmImage" alt=""><div><div class="pm-name" id="pmName">Character</div><span class="pm-tag">AI Companion</span></div></div><div class="pm-personality"><h4>Personality</h4><p id="pmPersonality">—</p></div><button class="pm-chat" id="pmChat" type="button">💬 Chat with this Character</button></div></div>
+'''
+          s = s.replace('</body>', modal + '</body>', 1)
+
+          js = r'''
+<script id="personality-modal-final-js">
+(()=>{
+  const M=document.getElementById('characterDetailModal'); if(!M)return;
+  const db=supabase.createClient('https://hcbajvladlvhklelbxdr.supabase.co','sb_publishable_eKKXyB0rc7QUwTbbydi8Xw_t0n27eIj');
+  const img=document.getElementById('pmImage'),name=document.getElementById('pmName'),personality=document.getElementById('pmPersonality'),close=document.getElementById('pmClose'),chat=document.getElementById('pmChat');
+  let chosen=null;
+  const open=(c,b)=>{chosen=b;img.src=c.image_url||('https://api.dicebear.com/9.x/adventurer/svg?seed='+encodeURIComponent(c.name||'Character'));name.textContent=c.name||'Character';const parts=[c.personality,c.description,c.backstory,c.scenario,c.speaking_style].filter(Boolean).map(x=>String(x).trim()).filter(Boolean);personality.textContent=parts.length?[...new Set(parts)].join('\n\n'):'This character has a unique personality, traits and conversational style.';M.classList.add('open');M.setAttribute('aria-hidden','false');document.body.style.overflow='hidden'};
+  const shut=()=>{M.classList.remove('open');M.setAttribute('aria-hidden','true');document.body.style.overflow=''};
+  close.onclick=shut; M.onclick=e=>{if(e.target===M)shut()}; document.addEventListener('keydown',e=>{if(e.key==='Escape')shut()}); chat.onclick=()=>{const b=chosen;shut();if(b)b.click()};
+  const grid=document.getElementById('characterGrid'); if(!grid)return;
+  const bind=()=>grid.querySelectorAll('.char').forEach(card=>{if(card.dataset.pmBound)return;card.dataset.pmBound='1';const b=card.querySelector('.choose');if(!b)return;card.addEventListener('click',async e=>{e.preventDefault();e.stopPropagation();const q=await db.from('characters').select('id,name,image_url,description,personality,backstory,scenario,speaking_style').eq('id',b.dataset.id).maybeSingle();if(q.data)open(q.data,b)},true)});
+  new MutationObserver(bind).observe(grid,{childList:true,subtree:true}); bind();
+})();
+</script>
+'''
+          s = s.replace('</body>', js + '</body>', 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit personality modal
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'Apply personality modal final'
+          git pull --rebase origin main
+          git push
