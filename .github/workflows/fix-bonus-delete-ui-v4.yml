@@ -1,0 +1,45 @@
+name: Fix bonus and delete UI v4
+on:
+  push:
+    branches:
+      - main
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch and push
+        run: |
+          cat > /tmp/patch_ui.py <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          css = '''<style id="ruby-ui-safety-fix">
+          .bonus{z-index:6000!important;pointer-events:auto!important;cursor:pointer!important}
+          .bpanel{display:none!important;pointer-events:none!important;z-index:6001!important}
+          .bpanel.open{display:block!important;pointer-events:auto!important}
+          .hc-modal{display:none!important;pointer-events:none!important;z-index:7000!important}
+          .hc-modal.open{display:flex!important;pointer-events:auto!important}
+          #hcModal{display:none!important}
+          #hcModal.open{display:flex!important}
+          </style>'''
+          if 'id="ruby-ui-safety-fix"' not in s:
+              if '</head>' not in s:
+                  raise SystemExit('head closing tag not found')
+              p.write_text(s.replace('</head>', css + '\n</head>', 1), encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for i in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard origin/main
+            python3 /tmp/patch_ui.py
+            git add index.html
+            git commit -m 'Fix bonus button interaction and delete modal' || true
+            if git push origin HEAD:main; then exit 0; fi
+          done
+          exit 1
