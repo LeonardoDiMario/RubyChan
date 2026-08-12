@@ -1,0 +1,61 @@
+name: Final History and JS integrity fix
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repair History markup and JavaScript
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+
+          # Replace the entire Chat view with a valid compact read-only history layout.
+          chat=re.search(r'<section id="chat" class="view">.*?</section>\s*\n\s*<section id="recharge"', s, flags=re.S)
+          if not chat:
+              raise SystemExit('chat section boundary not found')
+          new_chat='''<section id="chat" class="view"><div id="historyControls" style="display:none"><button class="hbtn" id="hcSelect">Select</button><button class="hbtn" id="hcAll" style="display:none">Select All</button><button class="hbtn danger" id="hcDelete" style="display:none">Delete</button><span class="hint" id="hcHint">Unpinned chats auto-delete 7 days after creation.</span></div><div class="history-layout"><aside class="side history-list-only"><div id="conversationList"></div></aside><section class="historybox"><div class="historymessages" id="historyMessages"></div></section></div></section>\n\n<section id="recharge"'''
+          s=s[:chat.start()]+new_chat+s[chat.end():]
+
+          # Remove the obsolete Telegram button handler; the app is read-only for history.
+          s=re.sub(r"\$\('openTelegramChat'\)\.addEventListener\([^;]*;", '', s)
+
+          # Replace openHistory so it only updates the message view that still exists.
+          s=re.sub(r"async function openHistory\(id\)\{.*?\}\s*async function loadMemories", "async function openHistory(id){const c=convs.find(x=>x.id===id);if(!c)return;const r=await sb.from('messages').select('role,content').eq('conversation_id',id).eq('user_id',profile.id).order('created_at');$('historyMessages').innerHTML=(r.data||[]).map(m=>`<div class=\"msg ${m.role==='user'?'user':'ai'}\">${esc(m.content)}</div>`).join('')||'<div class=\"msg ai\">No messages yet.</div>';document.querySelectorAll('.conversation').forEach(x=>x.classList.toggle('active',x.dataset.id===id))}async function loadMemories", s, flags=re.S)
+
+          # Remove broken leftover Memory save handler completely.
+          s=re.sub(r"nullSaveMemory\.addEventListener\(.*?\);\s*async function loadSettings", "async function loadSettings", s, flags=re.S)
+          s=s.replace("$('saveMemory').addEventListener", "nullSaveMemory.addEventListener") if "$('saveMemory').addEventListener" in s else s
+          s=s.replace("$('cardMemory').addEventListener('click',()=>show('memory'));", '')
+          s=s.replace("nav('navMemory','memory');", '')
+
+          # Ensure no stale Memory view remains in the view list.
+          s=s.replace("const views=['home','characters','chat','memory','recharge','settings'];", "const views=['home','characters','chat','recharge','settings'];")
+
+          p.write_text(s,encoding='utf-8')
+          PY
+
+          # Basic integrity checks.
+          grep -q '<section id="chat" class="view">' index.html
+          grep -q 'id="historyMessages"' index.html
+          grep -q 'id="settings" class="view"' index.html
+          grep -q 'id="language"' index.html
+          grep -q 'id="notif"' index.html
+          grep -q 'id="offers"' index.html
+          grep -q 'id="bgmode"' index.html
+          ! grep -q 'id="openTelegramChat"' index.html
+          ! grep -q 'navMemory' index.html
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Repair History markup and JavaScript integrity' || exit 0
+          git push origin HEAD:main
