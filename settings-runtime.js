@@ -5,29 +5,77 @@
   const SUPPORT=`Support & Feedback\n\nUse Support for account access problems, bugs, feature issues, Premium activation, Energy/Gems problems, payment questions and product feedback.\n\nBug Reports\nInclude the affected page, feature, steps to reproduce the problem and any visible error message.\n\nPayment / Premium Issues\nKeep the relevant receipt or transaction reference. Never send your banking password, PIN or OTP.\n\nOwner Contact\nThe official owner Telegram username is kept in one owner-contact setting and is not invented or guessed by the app.`;
 
   const boot=()=>{
-    if(document.documentElement.dataset.rubySettingsOverwrite==='1')return;
-    document.documentElement.dataset.rubySettingsOverwrite='1';
+    if(document.documentElement.dataset.rubySettingsOverwriteV2==='1')return;
+    document.documentElement.dataset.rubySettingsOverwriteV2='1';
 
     if(!document.getElementById('ruby-settings-overwrite-css')){
-      const s=document.createElement('style');s.id='ruby-settings-overwrite-css';s.textContent=`
-        #settings-overwrite-root{width:100%}.settings-overwrite{display:grid;gap:12px;padding:2px 0 110px}.settings-page-title{font-size:30px;font-weight:950;letter-spacing:.18em;color:#9b5d7c;margin:0 0 4px}.settings-section-title{font-size:10px;font-weight:950;letter-spacing:.16em;color:#b46a91;margin:8px 2px 0}.settings-card{width:100%;border:1px solid rgba(223,163,195,.3);border-radius:18px;background:rgba(255,255,255,.44);box-shadow:0 14px 34px rgba(184,104,147,.10);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}.settings-plan{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px}.settings-plan .kicker{display:block;font-size:9px;letter-spacing:.15em;font-weight:950;color:#b46a91}.settings-plan strong{display:block;font-size:24px;color:#824d68;margin-top:3px}.settings-plan small{display:block;font-size:10px;color:#9b788b;margin-top:4px}.settings-btn{border:0;border-radius:999px;padding:10px 14px;background:linear-gradient(135deg,#ff70ad,#aa82ff);color:#fff;font-weight:900;cursor:pointer;white-space:nowrap}.settings-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px;text-align:left;color:#714e65}.settings-row strong{font-size:13px}.settings-row small{display:block;font-size:10px;color:#9b788b;margin-top:4px}.settings-link{border:1px solid rgba(223,163,195,.3);cursor:pointer}.settings-chevron{font-size:22px;color:#b46a91}.settings-select{padding:8px 10px;border-radius:11px;border:1px solid rgba(223,163,195,.35);background:rgba(255,255,255,.62);color:#714e65}.settings-note{padding:13px}.settings-note strong{font-size:12px;color:#824d68}.settings-note p{margin:5px 0 0;font-size:10px;line-height:1.6;color:#9b788b}.ruby-policy-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(50,25,42,.25);backdrop-filter:blur(10px);z-index:10000}.ruby-policy-modal.open{display:flex}.ruby-policy-card{width:min(640px,100%);max-height:84vh;overflow:auto;border-radius:22px;padding:20px;background:rgba(255,249,252,.98);border:1px solid rgba(255,255,255,.9);box-shadow:0 30px 90px rgba(90,45,70,.28);color:#704c64}.ruby-policy-card h2{margin:0 0 12px;font-size:20px;color:#9e4f79}.ruby-policy-body{white-space:pre-line;font-size:11px;line-height:1.75;color:#896879}.ruby-policy-close{margin-top:15px;border:0;border-radius:999px;padding:9px 15px;background:linear-gradient(135deg,#ff70ad,#aa82ff);color:#fff;font-weight:900;cursor:pointer}
-      `;document.head.appendChild(s);
+      const s=document.createElement('style');
+      s.id='ruby-settings-overwrite-css';
+      s.textContent=`
+        #settings-overwrite-root{width:100%}
+        .settings-overwrite{display:grid;gap:12px;padding:0 0 110px}
+        .settings-page-title{font-size:30px!important;font-weight:950!important;letter-spacing:.18em!important;color:#4b2438!important;line-height:1.1!important;margin:0 0 4px!important;background:none!important;-webkit-text-fill-color:#4b2438!important}
+        .settings-section-title{font-size:10px!important;font-weight:950!important;letter-spacing:.16em!important;color:#7a3a58!important;margin:8px 2px 0!important}
+        .settings-card{width:100%;border:1px solid #e1c3d2!important;border-radius:18px!important;background:#fff8fc!important;box-shadow:0 10px 28px rgba(113,49,79,.10)!important;color:#3b2430!important}
+        .settings-plan{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px}
+        .settings-plan .kicker{display:block;font-size:9px;letter-spacing:.15em;font-weight:950;color:#8b4263}
+        .settings-plan strong{display:block;font-size:24px;color:#4b2438;margin-top:3px}
+        .settings-plan small{display:block;font-size:10px;color:#765766;margin-top:4px}
+        .settings-btn{border:0;border-radius:999px;padding:10px 14px;background:linear-gradient(135deg,#ff70ad,#8e70ff);color:#fff;font-weight:900;cursor:pointer;white-space:nowrap}
+        .settings-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px;text-align:left;color:#3b2430!important}
+        .settings-row strong{font-size:13px!important;color:#3b2430!important}
+        .settings-row small{display:block;font-size:10px!important;color:#765766!important;margin-top:4px}
+        .settings-link{border:1px solid #e1c3d2!important;cursor:pointer}
+        .settings-chevron{font-size:22px;color:#8b4263}
+        .settings-select{padding:8px 10px;border-radius:11px;border:1px solid #d9b7c8;background:#fff;color:#4b2438}
+        .settings-note{padding:13px}
+        .settings-note strong{font-size:12px;color:#6f3150}
+        .settings-note p{margin:5px 0 0;font-size:10px;line-height:1.6;color:#765766}
+        .ruby-policy-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(50,25,42,.32);backdrop-filter:blur(10px);z-index:10000}
+        .ruby-policy-modal.open{display:flex}
+        .ruby-policy-card{width:min(640px,100%);max-height:84vh;overflow:auto;border-radius:22px;padding:20px;background:#fff9fc;border:1px solid #f0d9e4;box-shadow:0 30px 90px rgba(90,45,70,.28);color:#3b2430}
+        .ruby-policy-card h2{margin:0 0 12px;font-size:20px;color:#7a3455}
+        .ruby-policy-body{white-space:pre-line;font-size:11px;line-height:1.75;color:#684b59}
+        .ruby-policy-close{margin-top:15px;border:0;border-radius:999px;padding:9px 15px;background:linear-gradient(135deg,#ff70ad,#8e70ff);color:#fff;font-weight:900;cursor:pointer}
+        #rubyAgeOverwrite{position:fixed!important;inset:0!important;z-index:30000!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:18px!important;background:rgba(12,7,11,.86)!important;backdrop-filter:blur(18px)!important}
+        .ruby-age-card{width:min(460px,100%);padding:24px;border-radius:26px;background:#fff9fc;border:1px solid #f0d9e4;box-shadow:0 35px 100px rgba(0,0,0,.42);color:#3b2430}
+        .ruby-age-badge{font-size:38px;font-weight:1000;color:#a53b6a;text-align:center}
+        .ruby-age-title{margin:2px 0 8px;text-align:center;font-size:24px;color:#4b2438}
+        .ruby-age-copy{text-align:center;font-size:11px;line-height:1.7;color:#765766}
+        .ruby-consent{display:flex;align-items:flex-start;gap:9px;padding:10px 0;font-size:11px;line-height:1.55;color:#4b3240}
+        .ruby-consent input{width:18px;height:18px;accent-color:#a44b78;flex:0 0 auto;margin-top:1px}
+        .ruby-consent a{color:#8a3d60;text-decoration:underline;font-weight:800}
+        #rubyAgeContinue{width:100%;border:0;border-radius:999px;padding:12px;font-weight:900;background:linear-gradient(135deg,#ff70ad,#8e70ff);color:#fff;cursor:pointer;opacity:.45}
+        #rubyAgeContinue.enabled{opacity:1}
+        #rubyAgeExit{width:100%;margin-top:8px;border:0;border-radius:999px;padding:12px;font-weight:900;background:#f0e3eb;color:#8f6379;cursor:pointer}
+      `;
+      document.head.appendChild(s);
     }
 
     const findSettings=()=>document.getElementById('settings')||document.getElementById('page-settings')||document.querySelector('[data-page="settings"]')||document.querySelector('.view[id*="setting"]');
+    const removeDuplicateSettingsTitles=()=>{
+      document.querySelectorAll('#ruby-page-title,.ruby-page-title,[data-ruby-page-title="settings"],.settings-page-title').forEach(el=>el.remove());
+    };
+
     const openPolicy=(title,body)=>{
       let m=document.getElementById('rubyPolicyModal');
-      if(!m){m=document.createElement('div');m.id='rubyPolicyModal';m.className='ruby-policy-modal';m.innerHTML='<div class="ruby-policy-card"><h2></h2><div class="ruby-policy-body"></div><button class="ruby-policy-close" type="button">Close</button></div>';document.body.appendChild(m);m.querySelector('.ruby-policy-close').onclick=()=>m.classList.remove('open');m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')})}
-      m.querySelector('h2').textContent=title;m.querySelector('.ruby-policy-body').textContent=body;m.classList.add('open');
+      if(!m){
+        m=document.createElement('div');m.id='rubyPolicyModal';m.className='ruby-policy-modal';
+        m.innerHTML='<div class="ruby-policy-card"><h2></h2><div class="ruby-policy-body"></div><button class="ruby-policy-close" type="button">Close</button></div>';
+        document.body.appendChild(m);
+        m.querySelector('.ruby-policy-close').onclick=()=>m.classList.remove('open');
+        m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')});
+      }
+      m.querySelector('h2').textContent=title;
+      m.querySelector('.ruby-policy-body').textContent=body;
+      m.classList.add('open');
     };
 
     const rebuildSettings=()=>{
-      const page=findSettings();
-      if(!page)return;
+      const page=findSettings();if(!page)return;
+      removeDuplicateSettingsTitles();
       let root=document.getElementById('settings-overwrite-root');
-      if(root)return;
-
-      // DIRECT OVERWRITE: remove every existing Settings child. No legacy Settings UI remains.
+      if(root){removeDuplicateSettingsTitles();return;}
       while(page.firstChild)page.removeChild(page.firstChild);
       root=document.createElement('div');root.id='settings-overwrite-root';
       root.innerHTML=`<div class="settings-overwrite">
@@ -41,10 +89,9 @@
         <button class="settings-card settings-row settings-link" id="rubySettingsTerms" type="button"><div><strong>Terms & Conditions</strong><small>Read the full service rules.</small></div><span class="settings-chevron">›</span></button>
         <button class="settings-card settings-row settings-link" id="rubySettingsPrivacy" type="button"><div><strong>Privacy Policy</strong><small>Learn how Ruby Chan handles platform data.</small></div><span class="settings-chevron">›</span></button>
         <button class="settings-card settings-row settings-link" id="rubySettingsAge" type="button"><div><strong>18+ Policy</strong><small>Adults-only access and safety rules.</small></div><span class="settings-chevron">›</span></button>
-        <section class="settings-card settings-note"><strong>18+ Adults Only</strong><p>Ruby Chan is available only to adults aged 18 and older. You must confirm your age before entering the platform.</p></section>
+        <section class="settings-card settings-note"><strong>18+ Adults Only</strong><p>Ruby Chan is available only to adults aged 18 and older. You must confirm your age and accept the Terms & Conditions before entering.</p></section>
       </div>`;
       page.appendChild(root);
-
       root.querySelector('#rubySettingsPlans').onclick=()=>document.getElementById('cardRecharge')?.click();
       root.querySelector('#rubySettingsSupport').onclick=()=>openPolicy('SUPPORT & FEEDBACK',SUPPORT);
       root.querySelector('#rubySettingsTerms').onclick=()=>openPolicy('TERMS & CONDITIONS',TERMS);
@@ -54,11 +101,34 @@
     };
 
     const ensureAgeGate=()=>{
-      const old=document.getElementById('ageGate');if(old){old.classList.remove('hidden');return;}
-      if(document.getElementById('rubyAgeOverwrite'))return;
-      const g=document.createElement('div');g.id='rubyAgeOverwrite';g.style.cssText='position:fixed;inset:0;z-index:20000;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(10,6,12,.84);backdrop-filter:blur(18px)';g.innerHTML='<div style="width:min(430px,100%);padding:24px;border-radius:24px;background:linear-gradient(180deg,#fff9fc,#f7edff);text-align:center;color:#714d65;box-shadow:0 30px 90px rgba(0,0,0,.42)"><div style="font-size:38px;font-weight:1000;color:#b04975">18+</div><h2 style="margin:0 0 10px">Adults only</h2><p style="font-size:11px;line-height:1.7;color:#957183">Ruby Chan is an adults-only AI companion platform. You must be 18 or older to continue.</p><button id="rubyAgeConfirm" style="width:100%;border:0;border-radius:999px;padding:12px;font-weight:900;background:linear-gradient(135deg,#ff70ad,#aa82ff);color:#fff">Yes, I’m 18+</button><button id="rubyAgeExit" style="width:100%;margin-top:8px;border:0;border-radius:999px;padding:12px;font-weight:900;background:#f0e3eb;color:#8f6379">No, Exit</button></div>';document.body.appendChild(g);g.querySelector('#rubyAgeConfirm').onclick=()=>g.remove();g.querySelector('#rubyAgeExit').onclick=()=>{g.innerHTML='<div style="color:#fff;text-align:center"><h2>Access Restricted</h2><p>Ruby Chan is available only to adults aged 18 and older.</p></div>'};
+      const persisted=localStorage.getItem('ruby_age_terms_accepted')==='true';
+      const existing=document.getElementById('ageGate');
+      if(persisted){existing?.classList.add('hidden');document.getElementById('rubyAgeOverwrite')?.remove();return;}
+      existing?.classList.add('hidden');
+      let g=document.getElementById('rubyAgeOverwrite');
+      if(!g){
+        g=document.createElement('div');g.id='rubyAgeOverwrite';
+        g.innerHTML=`<div class="ruby-age-card">
+          <div class="ruby-age-badge">18+</div>
+          <div class="ruby-age-title">Adults only</div>
+          <div class="ruby-age-copy">Ruby Chan is an adults-only AI companion platform. Confirm your age and accept the Terms & Conditions before entering.</div>
+          <label class="ruby-consent"><input id="rubyAgeCheck" type="checkbox"><span>Yes, I’m 18 years old or older.</span></label>
+          <label class="ruby-consent"><input id="rubyTermsCheck" type="checkbox"><span>I have read and agree to the <a href="#" id="rubyTermsLink">Terms & Conditions</a>.</span></label>
+          <label class="ruby-consent"><input id="rubyDontShow" type="checkbox"><span>Don’t show this confirmation again on this device.</span></label>
+          <button id="rubyAgeContinue" type="button">Continue to Ruby Chan</button>
+          <button id="rubyAgeExit" type="button">No, Exit</button>
+        </div>`;
+        document.body.appendChild(g);
+        g.querySelector('#rubyTermsLink').onclick=e=>{e.preventDefault();openPolicy('TERMS & CONDITIONS',TERMS)};
+        const age=g.querySelector('#rubyAgeCheck');const terms=g.querySelector('#rubyTermsCheck');const dont=g.querySelector('#rubyDontShow');const cont=g.querySelector('#rubyAgeContinue');
+        const sync=()=>cont.classList.toggle('enabled',age.checked&&terms.checked);
+        age.onchange=sync;terms.onchange=sync;dont.onchange=()=>{};
+        cont.onclick=()=>{if(!(age.checked&&terms.checked))return;if(dont.checked)localStorage.setItem('ruby_age_terms_accepted','true');g.remove();};
+        g.querySelector('#rubyAgeExit').onclick=()=>{g.innerHTML='<div class="ruby-age-card" style="text-align:center"><div class="ruby-age-badge">18+</div><div class="ruby-age-title">Access Restricted</div><div class="ruby-age-copy">You must be 18 or older and agree to the Terms & Conditions to use Ruby Chan.</div></div>';};
+      }
     };
 
+    removeDuplicateSettingsTitles();
     rebuildSettings();
     ensureAgeGate();
   };
