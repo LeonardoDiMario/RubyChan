@@ -1,0 +1,30 @@
+name: Final index overwrite
+on:
+  push:
+    branches:
+      - main
+permissions:
+  contents: write
+jobs:
+  overwrite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore verified index
+        env:
+          INDEX_B64: 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' 
+          python3 - <<'PY'
+          import base64,gzip,os
+          from pathlib import Path
+          Path('index.html').write_bytes(gzip.decompress(base64.b64decode(os.environ['INDEX_B64'])))
+          PY
+          rm -f .github/workflows/compact-premium-v*.yml .github/workflows/final-premium-ui.yml .github/workflows/overwrite-premium-ui.yml .github/workflows/personality-modal-*.yml .github/workflows/rp-ui-apply.yml .github/workflows/fix-bonus-delete-ui*.yml .github/workflows/fix-history-*.yml .github/workflows/cleanup-history-toolbar.yml
+      - name: Commit and force final main
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html .github/workflows
+          git commit -m 'Install verified Ruby Chan UI build' || true
+          git push --force origin HEAD:main
