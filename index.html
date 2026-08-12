@@ -55,7 +55,22 @@ body.hc-selecting .hc-check{display:block}
   const $=id=>document.getElementById(id);
   const esc=v=>String(v??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m]));
   const chatId=()=>String(tg?.initDataUnsafe?.user?.id||new URLSearchParams(location.search).get('telegram_chat_id')||'');
-  async function auth(){if(uid)return uid;const u=await db.auth.getUser();uid=u.data.user?.id||null;return uid}
+  async function auth(){
+  if(uid)return uid;
+  let u=await db.auth.getUser();
+  uid=u.data.user?.id||null;
+  if(uid)return uid;
+  const tgdata=tg?.initData||'';
+  let device_id=localStorage.getItem('ruby_device');
+  if(!device_id){device_id=(crypto.randomUUID?crypto.randomUUID():String(Date.now()))+'-'+Math.random();localStorage.setItem('ruby_device',device_id)}
+  const r=await db.functions.invoke('guest-session',{body:{device_id,init_data:tgdata}});
+  if(r.error||!r.data?.session)return null;
+  const set=await db.auth.setSession(r.data.session);
+  if(set.error)return null;
+  u=await db.auth.getUser();
+  uid=u.data.user?.id||null;
+  return uid;
+}
   function daysLeft(dt){const ms=new Date(dt).getTime()-Date.now();return Math.max(0,Math.ceil(ms/86400000))}
   function openBot(){const u='https://t.me/Rubby_Chan_Bot';if(tg?.openTelegramLink)tg.openTelegramLink(u);else window.open(u,'_blank')}
   async function cleanup(){await db.rpc('cleanup_expired_conversations')}
