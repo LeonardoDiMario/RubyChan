@@ -386,4 +386,4 @@ html,body{background:radial-gradient(circle at 18% 0%,#ffe0ef 0%,#f6eaff 34%,#ee
       img.src=fallback(img.alt||'Character');
     },true);
     window.addEventListener('load',()=>document.querySelectorAll('#characterGrid img').forEach(img=>{if(!img.complete||img.naturalWidth===0){img.dataset.fallbackApplied='1';img.src=fallback(img.alt||'Character')}}));
-    })();</script></body></html>
+    })();</script><script id="local-character-art">(()=>{const map={Yuna:"assets/characters/yuna.svg",Rin:"assets/characters/rin.svg",Akari:"assets/characters/akari.svg",Hana:"assets/characters/hana.svg",Reina:"assets/characters/reina.svg",Sakura:"assets/characters/sakura.svg"};const apply=()=>document.querySelectorAll('#characterGrid img').forEach(img=>{const n=(img.alt||'').trim();if(map[n]){img.src=map[n];img.onerror=null;}});new MutationObserver(apply).observe(document.body,{subtree:true,childList:true});window.addEventListener('load',apply);setTimeout(apply,500);})();</script></body></html>
