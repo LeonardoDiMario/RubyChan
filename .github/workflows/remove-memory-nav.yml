@@ -1,0 +1,35 @@
+name: Remove Memory navigation tab
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  remove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove Memory bottom navigation item
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          patterns = [
+              r'<button[^>]*(?:id|data-view|data-page)=["\'][^"\']*memory[^"\']["\'][^>]*>.*?</button>',
+              r'<a[^>]*(?:href|data-view|data-page)=["\'][^"\']*memory[^"\']["\'][^>]*>.*?</a>',
+              r'<li[^>]*(?:id|data-view|data-page)=["\'][^"\']*memory[^"\']["\'][^>]*>.*?</li>',
+          ]
+          for pat in patterns:
+              s = re.sub(pat, '', s, flags=re.S|re.I)
+          p.write_text(s, encoding='utf-8')
+          PY
+          test -s index.html
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Remove Memory tab from bottom navigation' || exit 0
+          git push origin HEAD:main
