@@ -1,0 +1,49 @@
+name: Remove Memory page
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  remove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove Memory page and navigation entries
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          # Remove the dedicated Memory view/page block.
+          patterns = [
+              r'<section[^>]*id=["\']memory["\'][^>]*>.*?</section>',
+              r'<section[^>]*id=["\']memoryView["\'][^>]*>.*?</section>',
+              r'<div[^>]*id=["\']memory["\'][^>]*>.*?</div>',
+              r'<div[^>]*id=["\']memoryView["\'][^>]*>.*?</div>',
+          ]
+          for pat in patterns:
+              s = re.sub(pat, '', s, flags=re.S|re.I)
+
+          # Remove explicit Memory nav buttons/links and old Memory labels.
+          s = re.sub(r'<button[^>]*(?:data-view|data-page|id)=["\'][^"\']*memory[^"\'][^>]*>.*?</button>', '', s, flags=re.S|re.I)
+          s = re.sub(r'<a[^>]*(?:href|data-view|data-page)=["\'][^"\']*memory[^"\'][^>]*>.*?</a>', '', s, flags=re.S|re.I)
+
+          # Remove the exact visible Memory page content if it remains as orphan markup.
+          s = re.sub(r'<h[1-6][^>]*>\s*Memory\s*</h[1-6]>', '', s, flags=re.I)
+          s = re.sub(r'<[^>]*>\s*Long-term notes\s*</[^>]+>', '', s, flags=re.I)
+          s = re.sub(r'<button[^>]*>\s*Save memory\s*</button>', '', s, flags=re.I)
+
+          p.write_text(s, encoding='utf-8')
+          PY
+
+          test -s index.html
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Remove Memory page and navigation' || exit 0
+          git push origin HEAD:main
