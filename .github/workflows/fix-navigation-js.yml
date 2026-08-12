@@ -1,0 +1,66 @@
+name: Fix navigation JS and History markup
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repair index.html JS and chat markup
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          # Replace the malformed chat section with a clean, minimal history list + message area.
+          new_chat = '''<section id="chat" class="view"><div id="historyControls" style="display:none"><button class="hbtn" id="hcSelect">Select</button><button class="hbtn" id="hcAll" style="display:none">Select All</button><button class="hbtn danger" id="hcDelete" style="display:none">Delete</button><span class="hint" id="hcHint">Unpinned chats auto-delete 7 days after creation.</span></div><div class="history-layout"><aside class="side"><div id="conversationList"></div></aside><section class="historybox"><div class="historymessages" id="historyMessages"></div></section></div></section>'''
+          s2, n = re.subn(r'<section id="chat" class="view">.*?</section>\s*<section id="recharge"', new_chat + '\n<section id="recharge"', s, count=1, flags=re.S)
+          if n != 1:
+              raise SystemExit('chat section pattern not found')
+          s = s2
+
+          # Remove the stale Open Telegram handler (element no longer exists).
+          s = re.sub(r"\$\('openTelegramChat'\)\.addEventListener\([^;]+;", '', s)
+
+          # Remove the broken orphan Memory save handler that caused JS parse failure.
+          s = re.sub(r'\s*nullSaveMemory\.addEventListener\([\s\S]*?\);(?=async function loadSettings\()', '', s, count=1)
+
+          # Remove stale memory loader function if present; Memory is intentionally gone.
+          s = re.sub(r'async function loadMemories\(\)\{[\s\S]*?\}\s*', '', s, count=1)
+
+          # Ensure navigation uses only existing views.
+          s = s.replace("const views=['home','characters','chat','recharge','settings'];", "const views=['home','characters','chat','recharge','settings'];")
+          s = s.replace("nav('navHome','home');nav('navCharacters','characters');nav('navChat','chat');nav('navSettings','settings');", "nav('navHome','home');nav('navCharacters','characters');nav('navChat','chat');nav('navSettings','settings');")
+
+          # Make sure no Memory navigation references remain.
+          s = re.sub(r"nav\('navMemory','memory'\);", '', s)
+          s = re.sub(r"\$\('cardMemory'\)\.addEventListener\([^;]+;", '', s)
+
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Validate JavaScript syntax
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, subprocess, tempfile, sys
+          s = Path('index.html').read_text(encoding='utf-8')
+          scripts = re.findall(r'<script(?:\s[^>]*)?>([\s\S]*?)</script>', s, re.I)
+          js = '\n'.join(scripts)
+          with tempfile.NamedTemporaryFile('w',suffix='.js',delete=False,encoding='utf-8') as f:
+              f.write(js); path=f.name
+          r = subprocess.run(['node','--check',path],capture_output=True,text=True)
+          print(r.stdout); print(r.stderr)
+          sys.exit(r.returncode)
+          PY
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Repair navigation and history JavaScript' || exit 0
+          git push origin HEAD:main
